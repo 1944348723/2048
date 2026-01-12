@@ -8,6 +8,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        Test.TestPushLine();
+
         gridMap = new GridMap(4, 4);
         board = new Board();
         board.Init(gridMap);
@@ -15,5 +17,24 @@ public class GameManager : MonoBehaviour
         boardView.Bind(board);
 
         board.StartGame();
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            board.Push(Direction.Up);
+        } else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            board.Push(Direction.Down);
+        }
+        else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            board.Push(Direction.Left);
+        }
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            board.Push(Direction.Right);
+        }
     }
 }
