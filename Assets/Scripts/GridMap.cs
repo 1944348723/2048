@@ -40,7 +40,7 @@ public class GridMap
         {
             for (int c = 0; c < cols; ++c)
             {
-                map[r, c] = -1;
+                map[r, c] = 0;
                 emptyCells.Add(new Vector2Int(r, c));
             }
         }
@@ -70,16 +70,27 @@ public class GridMap
 
     public void Set(int row, int col, int val)
     {
-        if (map[row, col] <= 0 && val > 0) {
+        if (map[row, col] == 0 && val != 0) {
             emptyCells.Remove(new Vector2Int(row, col));
-        } else if (map[row, col] > 0 && val <= 0) {
+        } else if (map[row, col] != 0 && val == 0) {
             emptyCells.Add(new Vector2Int(row, col));
         }
         map[row, col] = val;
     }
 
     // O(n)
-    public Vector2Int GetRandomEmptyPosition() {
+    public Vector2Int GetRandomEmptyCoordinate() {
         return emptyCells.ElementAt(Random.Range(0, emptyCells.Count));
+    }
+
+    public void Fill(int val)
+    {
+        for (int r = 0; r < rows; ++r)
+        {
+            for (int c = 0; c < cols; ++c)
+            {
+                Set(r, c, val);
+            }
+        }
     }
 }

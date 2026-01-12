@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class NumberTile : MonoBehaviour
+public class NumberTileView : MonoBehaviour
 {
     [SerializeField] private Image bg;
     [SerializeField] private TextMeshProUGUI numberText;
