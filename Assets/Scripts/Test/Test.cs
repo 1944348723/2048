@@ -5,6 +5,10 @@ public class Test
 {
     public static void TestPushLine()
     {
+        var gridMap = new GridMap(4, 4);
+        var board = new Board();
+        board.Init(gridMap);
+
         KeyValuePair<int[], int[]>[] pushLineTestData = new KeyValuePair<int[], int[]>[]
         {
             new KeyValuePair<int[], int[]>(
@@ -95,7 +99,7 @@ public class Test
         {
             int[] input = testData.Key;
             int[] expected = testData.Value;
-            Board.PushLine(input);
+            board.PushLine(input);
             int[] result = input;
             if (System.Linq.Enumerable.SequenceEqual(result, expected))
             {

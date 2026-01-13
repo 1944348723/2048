@@ -24,8 +24,8 @@ public static class DirectionExtensions {
 public class GridMap
 {
     private int[,] map;
-    private int rows = 10;
-    private int cols = 10;
+    private int rows;
+    private int cols;
     private Vector2 cellSize = new Vector2(1, 1);
     private Vector2 gap = new Vector2(0, 0);
     private Vector2 leftTop;
@@ -106,8 +106,8 @@ public class GridMap
         }
         map = newMap;
         int temp = rows;
-        rows = cols;
-        cols = temp;
+        this.rows = cols;
+        this.cols = temp;
         this.RebuildEmptyCells();
     }
 
@@ -167,6 +167,16 @@ public class GridMap
             res[col] = this.map[row, col];
         }
         return res;
+    }
+
+    public int GetRowCount()
+    {
+        return this.rows;
+    }
+
+    public int GetColCount()
+    {
+        return this.cols;
     }
 
     public void Display()
