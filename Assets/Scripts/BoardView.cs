@@ -26,10 +26,37 @@ public class BoardView : MonoBehaviour
     public void Init(GridMap gridMap)
     {
         this.gridMap = gridMap;
+        ConfigureGridLayout();
+        GenerateTileBgs();
+        PreCreateTileViews();
+    }
+
+    public void Bind(Board board)
+    {
+        board.OnTick += UpdateView;
+    }
+
+    private void ConfigureGridLayout()
+    {
         float tileWidth = CellBgPrefab.GetComponent<RectTransform>().rect.width;
         float tileHeight = CellBgPrefab.GetComponent<RectTransform>().rect.height;
-        this.gridMap.Init(new Vector2(tileWidth, tileHeight), new Vector2(gap.x, gap.y), this.transform.position);
-        
+        this.gridMap.ConfigureLayout(new Vector2(tileWidth, tileHeight), new Vector2(gap.x, gap.y), this.transform.position);
+    }
+
+    private void GenerateTileBgs()
+    {
+        for (int r = 0; r < gridMap.GetRowCount(); ++r)
+        {
+            for (int c = 0; c < gridMap.GetColCount(); ++c)
+            {
+                GameObject tileBg = Instantiate(CellBgPrefab, tileBgContainer.transform);
+                tileBg.transform.position = gridMap.GridToWorld(r, c);
+            }
+        }
+    }
+
+    private void PreCreateTileViews()
+    {
         freeTileViews = new LinkedList<NumberTileView>();
         activeTileViews = new NumberTileView[gridMap.GetRowCount(), gridMap.GetColCount()];
         for (int r = 0; r < gridMap.GetRowCount(); ++r)
@@ -42,11 +69,6 @@ public class BoardView : MonoBehaviour
                 tile.SetActive(false);
             }
         }
-    }
-
-    public void Bind(Board board)
-    {
-        board.OnTick += UpdateView;
     }
 
     private void UpdateView(List<TileAction> actions)

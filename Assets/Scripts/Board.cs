@@ -21,10 +21,15 @@ public struct TileAction
 enum Rotation { Clockwise90, Clockwise180, Clockwise270, None };
 public class Board
 {
+    // 固有
     private const int rows = 4;
     private const int cols = 4;
-    private GridMap gridMap;
     private int[] generatableNumbers = new int[] { 2, 4 };
+
+    // 注入
+    private GridMap gridMap;
+
+    // 运行时
     private Rotation currentRotation = Rotation.None;
     // 每次操作后清空
     private List<TileAction> tileActions = new();
@@ -34,12 +39,11 @@ public class Board
     public void Init(GridMap gridMap)
     {
         this.gridMap = gridMap;
+        this.OnTick += ClearTileActions;
     }
 
     public void StartGame()
     {
-        this.OnTick += ClearTileActions;
-
         this.gridMap.Fill(0);
         for (int i = 0; i < 2; ++i)
         {
