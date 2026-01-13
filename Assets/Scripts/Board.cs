@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 enum Rotation { Clockwise90, Clockwise180, Clockwise270, None };
@@ -100,50 +101,44 @@ public class Board
 
     // public方便测试，按理说应该是private
     // 往左，返回值为是否有变化
-    public static void PushLine(int[] arr)
+    public static void PushLine(int[] arr, int row = 0)
     {
-        int l = 0, r = 1;
-        int cur = 0;        // 下一个填入位置
-
-        int len = arr.Length;
-        do
+        // 非零数字提取到前面
+        // <val, source column>
+        var entries = new List<(int val, int sourceCol)>();
+        for (int col = 0; col < arr.Length; ++col)
         {
-            // 每次尝试寻找两个有效数字
-            while (l < len && arr[l] == 0) ++l;
-            r = l + 1;
-            while (r < len && arr[r] == 0) ++r;
+            if (arr[col] != 0)
+            {
+                entries.Add((arr[col], col));
+            }
+        }
 
-            // 找到两个
-            if (l < len && r < len)
+        // 处理合并和移动
+        int write = 0;
+        for (int read = 0; read < entries.Count; ++read)
+        {
+            // 保证read在数组范围内且read处元素有效
+            int val = entries[read].val;
+            int sourceCol = entries[read].sourceCol;
+
+            // 合并
+            if (read + 1 < entries.Count && entries[read + 1].val == val)
             {
-                if (arr[l] == arr[r])
-                {
-                    int valL = arr[l];
-                    arr[l] = 0;arr[r] = 0;
-                    arr[cur++] = 2 * valL;
-                    l = r + 1;
-                    r = l + 1;
-                    // TODO: 通知视图层
-                } else
-                {
-                    // 为了方便就不判断当前位置和目标位置是否相同了，直接统一化处理
-                    int valL = arr[l], valR = arr[r];
-                    arr[l] = 0;arr[r] = 0;
-                    arr[cur++] = valL;
-                    arr[cur] = valR;
-                    l = cur;
-                    r = l + 1;
-                    // TODO
-                }
-            } else if (l < len && r >= len)     // 找到一个
-            {
-                int val = arr[l];
-                arr[l] = 0;
-                arr[cur++] = val;
-                l = r;
+                arr[write] = val * 2;
+                ++read;
+
                 // TODO
-            } 
-            // 一个都没找到不需要处理，自然会退出循环
-        } while (l < len);
+            } else              // 移动
+            {
+                arr[write] = val;
+                // TODO
+            }
+            ++write;
+        }
+        for (; write < arr.Length; ++write)
+        {
+            arr[write] = 0;
+        }
     }
 }
