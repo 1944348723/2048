@@ -62,7 +62,7 @@ public class GridMap
         ) + centerPos;
     }
 
-    public Vector2 GridToWorld(int row, int col)
+    public Vector2 GridToPosition(int row, int col)
     {
         return new Vector2(this.leftTop.x + col * cellSize.x + col * gap.x, this.leftTop.y - row * cellSize.y - row * gap.y);
     }

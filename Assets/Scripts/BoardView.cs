@@ -2,33 +2,21 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 
 public class BoardView : MonoBehaviour
 {
     [SerializeField] private Vector2 gap = new Vector2(0f, 0f);
     [SerializeField] private GameObject CellBgPrefab;
     [SerializeField] private GameObject NumberTilePrefab;
+    [SerializeField] private GameObject tileBgContainer;
+    [SerializeField] private GameObject numberTileContainer;
 
     public event System.Action OnAnimationFinished;
 
     private GridMap gridMap;
-
-    private GameObject tileBgContainer;
-    private GameObject numberTileContainer;
     private LinkedList<NumberTileView> freeTileViews;
     private NumberTileView[,] activeTileViews;
     private float moveDuration = 0.1f;
-
-    void Awake()
-    {
-        tileBgContainer = new GameObject("TileBgContainer");
-        tileBgContainer.transform.parent = this.transform;
-        tileBgContainer.transform.localPosition = Vector3.zero;
-        numberTileContainer = new GameObject("NumberTileContainer");
-        numberTileContainer.transform.parent = this.transform;
-        numberTileContainer.transform.localPosition = Vector3.zero;
-    }
 
     public void Init(GridMap gridMap)
     {
@@ -52,7 +40,7 @@ public class BoardView : MonoBehaviour
     {
         float tileWidth = CellBgPrefab.GetComponent<RectTransform>().rect.width;
         float tileHeight = CellBgPrefab.GetComponent<RectTransform>().rect.height;
-        this.gridMap.ConfigureLayout(new Vector2(tileWidth, tileHeight), new Vector2(gap.x, gap.y), this.transform.position);
+        this.gridMap.ConfigureLayout(new Vector2(tileWidth, tileHeight), new Vector2(gap.x, gap.y), Vector2.zero);
     }
 
     private void GenerateTileBgs()
@@ -61,8 +49,9 @@ public class BoardView : MonoBehaviour
         {
             for (int c = 0; c < gridMap.GetColCount(); ++c)
             {
-                GameObject tileBg = Instantiate(CellBgPrefab, tileBgContainer.transform);
-                tileBg.transform.position = gridMap.GridToWorld(r, c);
+                GameObject tileBg = Instantiate(CellBgPrefab);
+                tileBg.transform.SetParent(tileBgContainer.transform, false);
+                tileBg.transform.localPosition = gridMap.GridToPosition(r, c);
             }
         }
     }
@@ -75,7 +64,8 @@ public class BoardView : MonoBehaviour
         // 多创建几个，假设棋盘摆满2，这时候移动的话，合并需要额外8个，生成需要额外1个，所以最极端情况下需要额外9个
         for (int i = 0; i < count + 9; ++i)
         {
-            GameObject tile = Instantiate(NumberTilePrefab, numberTileContainer.transform);
+            GameObject tile = Instantiate(NumberTilePrefab);
+            tile.transform.SetParent(numberTileContainer.transform, false);
             NumberTileView tileComponent = tile.GetComponent<NumberTileView>();
             freeTileViews.AddFirst(tileComponent);
             tile.SetActive(false);
@@ -91,7 +81,7 @@ public class BoardView : MonoBehaviour
                 case TileActionType.Spawn:
                     {
                         var tileView = GetTileView(action.val);
-                        tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
+                        tileView.transform.localPosition = gridMap.GridToPosition(action.to.x, action.to.y);
                         activeTileViews[action.to.x, action.to.y] = tileView;
                         tileView.gameObject.SetActive(true);
                     }
@@ -102,7 +92,7 @@ public class BoardView : MonoBehaviour
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.to.x, action.to.y] = tileView;
 
-                        Move(tileView.transform, tileView.transform.position, gridMap.GridToWorld(action.to.x, action.to.y), moveDuration);
+                        Move(tileView.transform, tileView.transform.localPosition, gridMap.GridToPosition(action.to.x, action.to.y), moveDuration);
                         // tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
                     }
                     break;
@@ -112,14 +102,14 @@ public class BoardView : MonoBehaviour
                         var tileView2 = activeTileViews[action.from2.x, action.from2.y];
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.from2.x, action.from2.y] = null;
-                        Move(tileView1.transform, tileView1.transform.position, gridMap.GridToWorld(action.to.x, action.to.y), moveDuration);
-                        Move(tileView2.transform, tileView2.transform.position, gridMap.GridToWorld(action.to.x, action.to.y), moveDuration);
+                        Move(tileView1.transform, tileView1.transform.localPosition, gridMap.GridToPosition(action.to.x, action.to.y), moveDuration);
+                        Move(tileView2.transform, tileView2.transform.localPosition, gridMap.GridToPosition(action.to.x, action.to.y), moveDuration);
                         StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveDuration));
                         StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveDuration));
 
                         var newtileView = GetTileView(action.val);
                         activeTileViews[action.to.x, action.to.y] = newtileView;
-                        newtileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
+                        newtileView.transform.localPosition = gridMap.GridToPosition(action.to.x, action.to.y);
                         StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveDuration));
                     }
                     break;
@@ -135,11 +125,11 @@ public class BoardView : MonoBehaviour
     private IEnumerator MoveCoroutine(Transform target, Vector3 from, Vector3 to, float duration) {
         float elapsed = 0f;
         while (elapsed < duration) {
-            target.position = Vector3.Lerp(from, to, elapsed / duration);
+            target.localPosition = Vector3.Lerp(from, to, elapsed / duration);
             elapsed += Time.deltaTime;
             yield return null;
         }
-        target.position = to;
+        target.localPosition = to;
     }
 
     private NumberTileView GetTileView(int val)
