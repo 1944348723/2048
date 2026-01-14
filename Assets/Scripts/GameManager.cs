@@ -3,8 +3,11 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private BoardView boardView;
+    [SerializeField] private float animationDuration = 0.1f;
+
     private Board board;
     private GridMap gridMap;
+    private bool enableInput = true;
 
     void Start()
     {
@@ -15,26 +18,35 @@ public class GameManager : MonoBehaviour
         board.Init(gridMap);
         boardView.Init(gridMap);
         boardView.Bind(board);
+        boardView.SetAnimationDuration(this.animationDuration);
+        boardView.OnAnimationFinished += () => { this.enableInput = true; };
 
         board.StartGame();
     }
 
     void Update()
     {
+        if (!enableInput) return;
+
+        bool hasChanged = false;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            board.Push(Direction.Up);
+            hasChanged = board.Push(Direction.Up);
         } else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            board.Push(Direction.Down);
+            hasChanged = board.Push(Direction.Down);
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            board.Push(Direction.Left);
+            hasChanged = board.Push(Direction.Left);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            board.Push(Direction.Right);
+            hasChanged = board.Push(Direction.Right);
+        }
+        if (hasChanged)
+        {
+            enableInput = false;
         }
     }
 }

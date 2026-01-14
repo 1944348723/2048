@@ -1,11 +1,14 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public enum TileActionType { Move, Merge, Spawn };
 /*
     Move - from, to
-    Merge - from1, from2, to
+    Merge - from1, from2, to, val
     Spawn - to, val
 */
 public struct TileAction
@@ -30,11 +33,10 @@ public class Board
     private GridMap gridMap;
 
     // 运行时
+    public event System.Action<List<TileAction>> OnTick;  // number, row, col
     private Rotation currentRotation = Rotation.None;
     // 每次操作后清空
     private List<TileAction> tileActions = new();
-
-    public event System.Action<List<TileAction>> OnTick;  // number, row, col
     
     public void Init(GridMap gridMap)
     {
@@ -71,7 +73,7 @@ public class Board
         });
     }
 
-    public void Push(Direction dir)
+    public bool Push(Direction dir)
     {
         bool hasChanged = false;
         switch (dir)
@@ -104,11 +106,11 @@ public class Board
         if (hasChanged)
         {
             GenerateRandomNumber();
+            // 绘制
+            gridMap.Display();
+            OnTick?.Invoke(new List<TileAction>(tileActions));
         }
-
-        // 绘制
-        gridMap.Display();
-        OnTick?.Invoke(new List<TileAction>(tileActions));
+        return hasChanged;
     }
 
 

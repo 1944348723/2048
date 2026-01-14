@@ -1,5 +1,8 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 public class BoardView : MonoBehaviour
 {
@@ -7,11 +10,15 @@ public class BoardView : MonoBehaviour
     [SerializeField] private GameObject CellBgPrefab;
     [SerializeField] private GameObject NumberTilePrefab;
 
+    public event System.Action OnAnimationFinished;
+
     private GridMap gridMap;
+
     private GameObject tileBgContainer;
     private GameObject numberTileContainer;
     private LinkedList<NumberTileView> freeTileViews;
     private NumberTileView[,] activeTileViews;
+    private float moveDuration = 0.1f;
 
     void Awake()
     {
@@ -34,6 +41,11 @@ public class BoardView : MonoBehaviour
     public void Bind(Board board)
     {
         board.OnTick += UpdateView;
+    }
+
+    public void SetAnimationDuration(float duration)
+    {
+        this.moveDuration = duration;
     }
 
     private void ConfigureGridLayout()
@@ -59,15 +71,14 @@ public class BoardView : MonoBehaviour
     {
         freeTileViews = new LinkedList<NumberTileView>();
         activeTileViews = new NumberTileView[gridMap.GetRowCount(), gridMap.GetColCount()];
-        for (int r = 0; r < gridMap.GetRowCount(); ++r)
+        int count = gridMap.GetRowCount() * gridMap.GetColCount();
+        // 多创建几个，假设棋盘摆满2，这时候移动的话，合并需要额外8个，生成需要额外1个，所以最极端情况下需要额外9个
+        for (int i = 0; i < count + 9; ++i)
         {
-            for (int c = 0; c < gridMap.GetColCount(); ++c)
-            {
-                GameObject tile = Instantiate(NumberTilePrefab, numberTileContainer.transform);
-                NumberTileView tileComponent = tile.GetComponent<NumberTileView>();
-                freeTileViews.AddFirst(tileComponent);
-                tile.SetActive(false);
-            }
+            GameObject tile = Instantiate(NumberTilePrefab, numberTileContainer.transform);
+            NumberTileView tileComponent = tile.GetComponent<NumberTileView>();
+            freeTileViews.AddFirst(tileComponent);
+            tile.SetActive(false);
         }
     }
 
@@ -79,9 +90,7 @@ public class BoardView : MonoBehaviour
             {
                 case TileActionType.Spawn:
                     {
-                        var tileView = freeTileViews.First.Value;
-                        freeTileViews.RemoveFirst();
-                        tileView.SetNumber(action.val);
+                        var tileView = GetTileView(action.val);
                         tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
                         activeTileViews[action.to.x, action.to.y] = tileView;
                         tileView.gameObject.SetActive(true);
@@ -92,7 +101,9 @@ public class BoardView : MonoBehaviour
                         var tileView = activeTileViews[action.from1.x, action.from1.y];
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.to.x, action.to.y] = tileView;
-                        tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
+
+                        Move(tileView.transform, tileView.transform.position, gridMap.GridToWorld(action.to.x, action.to.y), moveDuration);
+                        // tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
                     }
                     break;
                 case TileActionType.Merge:
@@ -101,14 +112,46 @@ public class BoardView : MonoBehaviour
                         var tileView2 = activeTileViews[action.from2.x, action.from2.y];
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.from2.x, action.from2.y] = null;
-                        activeTileViews[action.to.x, action.to.y] = tileView1;
-                        tileView1.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
-                        tileView1.SetNumber(action.val);
-                        tileView2.gameObject.SetActive(false);
-                        freeTileViews.AddLast(tileView2);
+                        Move(tileView1.transform, tileView1.transform.position, gridMap.GridToWorld(action.to.x, action.to.y), moveDuration);
+                        Move(tileView2.transform, tileView2.transform.position, gridMap.GridToWorld(action.to.x, action.to.y), moveDuration);
+                        StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveDuration));
+                        StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveDuration));
+
+                        var newtileView = GetTileView(action.val);
+                        activeTileViews[action.to.x, action.to.y] = newtileView;
+                        newtileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
+                        StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveDuration));
                     }
                     break;
             }
         }
+        StartCoroutine(DelayAction(() => { this.OnAnimationFinished?.Invoke(); }, moveDuration));
+    }
+
+    private void Move(Transform target, Vector3 from, Vector3 to, float duration) {
+        StartCoroutine(MoveCoroutine(target, from, to, duration));
+    }
+
+    private IEnumerator MoveCoroutine(Transform target, Vector3 from, Vector3 to, float duration) {
+        float elapsed = 0f;
+        while (elapsed < duration) {
+            target.position = Vector3.Lerp(from, to, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        target.position = to;
+    }
+
+    private NumberTileView GetTileView(int val)
+    {
+        var tileView = freeTileViews.First.Value;
+        freeTileViews.RemoveFirst();
+        tileView.SetNumber(val);
+        return tileView;
+    }
+
+    private IEnumerator DelayAction(Action action, float delay) {
+        yield return new WaitForSeconds(delay);
+        action();
     }
 }
