@@ -22,4 +22,10 @@ public class NumberTileView : MonoBehaviour
     {
         bg.color = color;
     }
+
+    public void Apply(TileColor tileColor)
+    {
+        bg.color = tileColor.backgroundColor;
+        numberText.color = tileColor.numberColor;
+    }
 }

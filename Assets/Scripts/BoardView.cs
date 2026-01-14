@@ -10,6 +10,7 @@ public class BoardView : MonoBehaviour
     [SerializeField] private GameObject NumberTilePrefab;
     [SerializeField] private GameObject tileBgContainer;
     [SerializeField] private GameObject numberTileContainer;
+    [SerializeField] private TileColor[] colors;
 
     public event System.Action OnAnimationFinished;
 
@@ -132,16 +133,36 @@ public class BoardView : MonoBehaviour
         target.localPosition = to;
     }
 
-    private NumberTileView GetTileView(int val)
+    private NumberTileView GetTileView(int num)
     {
         var tileView = freeTileViews.First.Value;
         freeTileViews.RemoveFirst();
-        tileView.SetNumber(val);
+        tileView.SetNumber(num);
+        tileView.Apply(GetColor(num));
         return tileView;
     }
 
     private IEnumerator DelayAction(Action action, float delay) {
         yield return new WaitForSeconds(delay);
         action();
+    }
+
+    private TileColor GetColor(int num)
+    {
+        switch (num)
+        {
+            case 2: return colors[0];
+            case 4: return colors[1];
+            case 8: return colors[2];
+            case 16: return colors[3];
+            case 32: return colors[4];
+            case 64: return colors[5];
+            case 128: return colors[6];
+            case 256: return colors[7];
+            case 512: return colors[8];
+            case 1024: return colors[9];
+            case 2048: return colors[10];
+        }
+        return colors[0];
     }
 }

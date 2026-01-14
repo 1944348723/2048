@@ -55,7 +55,7 @@ public class GridMap
     {
         this.cellSize = cellSize;
         this.gap = gap;
-        // (0, 0)元素中心的世界坐标
+        // (0, 0)元素中心的坐标
         this.leftTop = new Vector2(
             (-cols / 2.0f + 0.5f) * cellSize.x - (cols - 1) / 2f * gap.x,
             (rows / 2.0f - 0.5f) * cellSize.y + (rows - 1) / 2f * gap.y
