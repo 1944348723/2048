@@ -34,6 +34,7 @@ public class Board
 
     // 运行时
     public event System.Action<List<TileAction>> OnTick;  // number, row, col
+    public event System.Action<int> OnMerge;
     private Rotation currentRotation = Rotation.None;
     // 每次操作后清空
     private List<TileAction> tileActions = new();
@@ -174,6 +175,7 @@ public class Board
                     actionType = TileActionType.Merge
                 };
                 this.tileActions.Add(mergeAction);
+                this.OnMerge?.Invoke(2 * val);
             }
             else  // 移动
             {

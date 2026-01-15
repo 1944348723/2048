@@ -2,11 +2,14 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private BoardView boardView;
     [SerializeField] private float animationDuration = 0.1f;
+    [SerializeField] private BoardView boardView;
+    [SerializeField] private UIScore uiScore;
 
-    private Board board;
     private GridMap gridMap;
+    private Board board;
+    private ScoreSystem scoreSystem;
+
     private bool enableInput = true;
 
     void Start()
@@ -15,11 +18,17 @@ public class GameManager : MonoBehaviour
 
         gridMap = new GridMap(4, 4);
         board = new Board();
+        scoreSystem = new ScoreSystem();
+
         board.Init(gridMap);
         boardView.Init(gridMap);
-        boardView.Bind(board);
         boardView.SetAnimationDuration(this.animationDuration);
+        uiScore.SetHighScore(scoreSystem.GetHighScore());
+
+        boardView.Bind(board);
         boardView.OnAnimationFinished += () => { this.enableInput = true; };
+        board.OnMerge += newVal => { scoreSystem.AddScore(newVal); };
+        scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
 
         board.StartGame();
     }
