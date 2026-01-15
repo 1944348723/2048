@@ -28,4 +28,10 @@ public class ScoreSystem
         OnHighScoreChanged?.Invoke(this.score);
         return true;
     }
+
+    public void Reset()
+    {
+        this.score = 0;
+        this.OnScoreChanged(0);
+    }
 }

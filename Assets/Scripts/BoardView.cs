@@ -32,6 +32,18 @@ public class BoardView : MonoBehaviour
         board.OnTick += UpdateView;
     }
 
+    public void Reset()
+    {
+        foreach (var tile in activeTileViews)
+        {
+            if (tile)
+            {
+                tile.gameObject.SetActive(false);
+                freeTileViews.AddFirst(tile);
+            }
+        }
+    }
+
     public void SetAnimationDuration(float duration)
     {
         this.moveDuration = duration;

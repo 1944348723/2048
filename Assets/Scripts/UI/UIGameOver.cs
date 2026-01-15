@@ -5,8 +5,11 @@ using UnityEngine.UI;
 public class UIGameOver : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI highScore;
+    [SerializeField] private TextMeshProUGUI highScoreText;
     [SerializeField] private Button playAgainButton;
     [SerializeField] private Button exitButton;
+
+    public event System.Action OnPlayAgain;
 
     void OnEnable()
     {
@@ -20,14 +23,24 @@ public class UIGameOver : MonoBehaviour
         this.exitButton.onClick.RemoveListener(OnExitButtonClicked);
     }
 
-    public void SetHighScore(int score)
+    public void ShowHighScore(int score)
     {
         this.highScore.SetText(score.ToString());
+        this.highScore.gameObject.SetActive(true);
+        this.highScoreText.gameObject.SetActive(true);
+    }
+
+    public void Reset()
+    {
+        this.highScore.SetText(0.ToString());
+        this.highScore.gameObject.SetActive(false);
+        this.highScoreText.gameObject.SetActive(false);
     }
 
     private void OnPlayAgainButtonClicked()
     {
         Debug.Log("OnPlayAgainButtonClicked");
+        OnPlayAgain?.Invoke();
     }
 
     private void OnExitButtonClicked()

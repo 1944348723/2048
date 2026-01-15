@@ -30,7 +30,8 @@ public class GameManager : MonoBehaviour
         boardView.OnAnimationFinished += () => { CheckGameOver(); };
         board.OnMerge += newVal => { scoreSystem.AddScore(newVal); };
         scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
-        scoreSystem.OnHighScoreChanged += score => { uiGameOver.SetHighScore(score); };
+        scoreSystem.OnHighScoreChanged += score => { uiGameOver.ShowHighScore(score); };
+        uiGameOver.OnPlayAgain += Restart;
 
         board.StartGame();
     }
@@ -59,6 +60,16 @@ public class GameManager : MonoBehaviour
         {
             enableInput = false;
         }
+    }
+
+    private void Restart()
+    {
+        boardView.Reset();
+        board.StartGame();
+        scoreSystem.Reset();
+        uiGameOver.Reset();
+        uiGameOver.gameObject.SetActive(false);
+        uiScore.SetHighScore(scoreSystem.GetHighScore());
     }
 
     private void CheckGameOver()

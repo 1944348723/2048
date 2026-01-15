@@ -507,7 +507,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &457269804
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1126,7 +1126,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1007098784
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1424,7 +1424,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc96538ff2f4a4b4c9f3e891ddf51744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  highScore: {fileID: 0}
+  highScore: {fileID: 1007098785}
+  highScoreText: {fileID: 457269805}
   playAgainButton: {fileID: 366806875}
   exitButton: {fileID: 1929202996}
 --- !u!1 &1403297643
