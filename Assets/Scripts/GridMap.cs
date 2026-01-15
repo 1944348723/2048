@@ -163,6 +163,7 @@ public class GridMap
         return new Vector2Int(cols - 1 - coord.y, coord.x);
     }
 
+    // 复制一份
     public int[] GetRow(int row)
     {
         int[] res = new int[cols];

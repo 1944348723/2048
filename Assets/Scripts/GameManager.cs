@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
         uiScore.SetHighScore(scoreSystem.GetHighScore());
 
         boardView.Bind(board);
-        boardView.OnAnimationFinished += () => { this.enableInput = true; };
+        boardView.OnAnimationFinished += () => { CheckGameOver(); };
         board.OnMerge += newVal => { scoreSystem.AddScore(newVal); };
         scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
 
@@ -40,22 +40,41 @@ public class GameManager : MonoBehaviour
         bool hasChanged = false;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            hasChanged = board.Push(Direction.Up);
+            hasChanged = board.Push(Direction.Up, true);
         } else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            hasChanged = board.Push(Direction.Down);
+            hasChanged = board.Push(Direction.Down, true);
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            hasChanged = board.Push(Direction.Left);
+            hasChanged = board.Push(Direction.Left, true);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            hasChanged = board.Push(Direction.Right);
+            hasChanged = board.Push(Direction.Right, true);
         }
         if (hasChanged)
         {
             enableInput = false;
         }
+    }
+
+    private void CheckGameOver()
+    {
+        if (board.Push(Direction.Up, false)
+            || board.Push(Direction.Down, false)
+            || board.Push(Direction.Left, false)
+            || board.Push(Direction.Right, false))
+        {
+            this.enableInput = true;
+        } else
+        {
+            GameOver();
+        }
+    }
+
+    private void GameOver()
+    {
+        Debug.Log("Game Over");
     }
 }

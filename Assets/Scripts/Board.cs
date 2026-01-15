@@ -1,7 +1,4 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -74,7 +71,7 @@ public class Board
         });
     }
 
-    public bool Push(Direction dir)
+    public bool Push(Direction dir, bool takeEffect)
     {
         bool hasChanged = false;
         switch (dir)
@@ -82,29 +79,29 @@ public class Board
             case Direction.Up:
                 this.gridMap.Rotate270Clockwise();
                 this.currentRotation = Rotation.Clockwise270;
-                hasChanged = this.PushLeft();
+                hasChanged = this.PushLeft(takeEffect);
                 this.gridMap.Rotate90Clockwise();
                 this.currentRotation = Rotation.None;
                 break;
             case Direction.Down:
                 this.gridMap.Rotate90Clockwise();
                 this.currentRotation = Rotation.Clockwise90;
-                hasChanged = this.PushLeft();
+                hasChanged = this.PushLeft(takeEffect);
                 this.gridMap.Rotate270Clockwise();
                 this.currentRotation = Rotation.None;
                 break;
             case Direction.Left:
-                hasChanged = PushLeft();
+                hasChanged = PushLeft(takeEffect);
                 break;
             case Direction.Right:
                 this.gridMap.Rotate180Clockwise();
                 this.currentRotation = Rotation.Clockwise180;
-                hasChanged = this.PushLeft();
+                hasChanged = this.PushLeft(takeEffect);
                 this.gridMap.Rotate180Clockwise();
                 this.currentRotation = Rotation.None;
                 break;
         }
-        if (hasChanged)
+        if (hasChanged && takeEffect)
         {
             GenerateRandomNumber();
             // 绘制
@@ -114,9 +111,8 @@ public class Board
         return hasChanged;
     }
 
-
     // 返回值为是否有变化
-    private bool PushLeft()
+    private bool PushLeft(bool takeEffect)
     {
         bool hasChanged = false;
 
@@ -124,14 +120,16 @@ public class Board
         {
             int[] row = this.gridMap.GetRow(r);
             int[] originalRow = (int[])row.Clone();
-            PushLine(row, r);
-            for (int c = 0; c < row.Length; ++c)
-            {
-                gridMap.Set(r, c, row[c]);
-            }
+            PushLine(row, r, takeEffect);
             if (!hasChanged && !System.Linq.Enumerable.SequenceEqual(row, originalRow))
             {
                 hasChanged = true;
+            }
+
+            if (!takeEffect) continue;  // 不生效的话跳过写回
+            for (int c = 0; c < row.Length; ++c)
+            {
+                this.gridMap.Set(r, c, row[c]);
             }
         }
         return hasChanged;
@@ -139,7 +137,7 @@ public class Board
 
     // public方便测试，按理说应该是private
     // 往左，返回值为是否有变化
-    public void PushLine(int[] arr, int row = 0)
+    public void PushLine(int[] arr, int row = 0, bool takeEffect = true)
     {
         // 非零数字提取到前面
         // <val, source column>
@@ -154,7 +152,7 @@ public class Board
 
         // 处理合并和移动
         int write = 0;
-        for (int read = 0; read < entries.Count; ++read)
+        for (int read = 0; read < entries.Count; ++read, ++write)
         {
             // 保证read在数组范围内且read处元素有效
             int val = entries[read].val;
@@ -166,6 +164,7 @@ public class Board
                 arr[write] = val * 2;
                 ++read;
 
+                if (!takeEffect) continue;
                 var mergeAction = new TileAction
                 {
                     from1 = ToCoordinateBeforeRotation(new Vector2Int(row, sourceCol)),
@@ -180,6 +179,8 @@ public class Board
             else  // 移动
             {
                 arr[write] = val;
+
+                if (!takeEffect) continue;
                 var moveAction = new TileAction
                 {
                     from1 = ToCoordinateBeforeRotation(new Vector2Int(row, sourceCol)),
@@ -188,7 +189,6 @@ public class Board
                 };
                 this.tileActions.Add(moveAction);
             }
-            ++write;
         }
         for (; write < arr.Length; ++write)
         {
