@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class BoardView : MonoBehaviour
 {
-    [SerializeField] private Vector2 gap = new Vector2(0f, 0f);
+    [SerializeField] private Vector2 gap = new(0f, 0f);
     [SerializeField] private GameObject CellBgPrefab;
     [SerializeField] private GameObject NumberTilePrefab;
     [SerializeField] private GameObject tileBgContainer;
@@ -14,15 +14,21 @@ public class BoardView : MonoBehaviour
 
     public event System.Action OnAnimationFinished;
 
-    private GridMap gridMap;
+    // 布局
+    private int rows = 0;
+    private int cols = 0;
+    private Vector2 cellSize = new(1, 1);
+    private Vector2 leftTop;
+
     private LinkedList<NumberTileView> freeTileViews;
     private NumberTileView[,] activeTileViews;
     private float moveDuration = 0.1f;
 
-    public void Init(GridMap gridMap)
+    public void Init(int rowCount, int colCount)
     {
-        this.gridMap = gridMap;
-        ConfigureGridLayout();
+        this.rows = rowCount;
+        this.cols = colCount;
+        ConfigureLayout();
         GenerateTileBgs();
         PreCreateTileViews();
     }
@@ -49,22 +55,30 @@ public class BoardView : MonoBehaviour
         this.moveDuration = duration;
     }
 
-    private void ConfigureGridLayout()
+    private void ConfigureLayout()
     {
-        float tileWidth = CellBgPrefab.GetComponent<RectTransform>().rect.width;
-        float tileHeight = CellBgPrefab.GetComponent<RectTransform>().rect.height;
-        this.gridMap.ConfigureLayout(new Vector2(tileWidth, tileHeight), new Vector2(gap.x, gap.y), Vector2.zero);
+        cellSize.x = CellBgPrefab.GetComponent<RectTransform>().rect.width;
+        cellSize.y = CellBgPrefab.GetComponent<RectTransform>().rect.height;
+        this.leftTop = new Vector2(
+            (-cols / 2.0f + 0.5f) * cellSize.x - (cols - 1) / 2f * gap.x,
+            (rows / 2.0f - 0.5f) * cellSize.y + (rows - 1) / 2f * gap.y
+        );
+    }
+
+    private Vector2 GridToPosition(int row, int col)
+    {
+        return new Vector2(this.leftTop.x + col * cellSize.x + col * gap.x, this.leftTop.y - row * cellSize.y - row * gap.y);
     }
 
     private void GenerateTileBgs()
     {
-        for (int r = 0; r < gridMap.GetRowCount(); ++r)
+        for (int r = 0; r < rows; ++r)
         {
-            for (int c = 0; c < gridMap.GetColCount(); ++c)
+            for (int c = 0; c < cols; ++c)
             {
                 GameObject tileBg = Instantiate(CellBgPrefab);
                 tileBg.transform.SetParent(tileBgContainer.transform, false);
-                tileBg.transform.localPosition = gridMap.GridToPosition(r, c);
+                tileBg.transform.localPosition = GridToPosition(r, c);
             }
         }
     }
@@ -72,8 +86,8 @@ public class BoardView : MonoBehaviour
     private void PreCreateTileViews()
     {
         freeTileViews = new LinkedList<NumberTileView>();
-        activeTileViews = new NumberTileView[gridMap.GetRowCount(), gridMap.GetColCount()];
-        int count = gridMap.GetRowCount() * gridMap.GetColCount();
+        activeTileViews = new NumberTileView[rows, cols];
+        int count = rows * cols;
         // 多创建几个，假设棋盘摆满2，这时候移动的话，合并需要额外8个，生成需要额外1个，所以最极端情况下需要额外9个
         for (int i = 0; i < count + 9; ++i)
         {
@@ -94,7 +108,7 @@ public class BoardView : MonoBehaviour
                 case TileActionType.Spawn:
                     {
                         var tileView = GetTileView(action.val);
-                        tileView.transform.localPosition = gridMap.GridToPosition(action.to.x, action.to.y);
+                        tileView.transform.localPosition = GridToPosition(action.to.x, action.to.y);
                         activeTileViews[action.to.x, action.to.y] = tileView;
                         tileView.gameObject.SetActive(true);
                     }
@@ -105,7 +119,7 @@ public class BoardView : MonoBehaviour
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.to.x, action.to.y] = tileView;
 
-                        Move(tileView.transform, tileView.transform.localPosition, gridMap.GridToPosition(action.to.x, action.to.y), moveDuration);
+                        Move(tileView.transform, tileView.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveDuration);
                         // tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
                     }
                     break;
@@ -115,14 +129,14 @@ public class BoardView : MonoBehaviour
                         var tileView2 = activeTileViews[action.from2.x, action.from2.y];
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.from2.x, action.from2.y] = null;
-                        Move(tileView1.transform, tileView1.transform.localPosition, gridMap.GridToPosition(action.to.x, action.to.y), moveDuration);
-                        Move(tileView2.transform, tileView2.transform.localPosition, gridMap.GridToPosition(action.to.x, action.to.y), moveDuration);
+                        Move(tileView1.transform, tileView1.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveDuration);
+                        Move(tileView2.transform, tileView2.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveDuration);
                         StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveDuration));
                         StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveDuration));
 
                         var newtileView = GetTileView(action.val);
                         activeTileViews[action.to.x, action.to.y] = newtileView;
-                        newtileView.transform.localPosition = gridMap.GridToPosition(action.to.x, action.to.y);
+                        newtileView.transform.localPosition = GridToPosition(action.to.x, action.to.y);
                         StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveDuration));
                     }
                     break;

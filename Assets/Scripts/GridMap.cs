@@ -27,11 +27,6 @@ public class GridMap
     private int rows;
     private int cols;
 
-    // 外部传入的布局参数
-    private Vector2 cellSize = new Vector2(1, 1);
-    private Vector2 gap = new Vector2(0, 0);
-    private Vector2 leftTop;
-
     // 运行时
     private HashSet<Vector2Int> emptyCells = new HashSet<Vector2Int>();
 
@@ -48,23 +43,6 @@ public class GridMap
                 emptyCells.Add(new Vector2Int(r, c));
             }
         }
-    }
-
-    // 需要映射到世界坐标系时调用
-    public void ConfigureLayout(Vector2 cellSize, Vector2 gap, Vector2 centerPos)
-    {
-        this.cellSize = cellSize;
-        this.gap = gap;
-        // (0, 0)元素中心的坐标
-        this.leftTop = new Vector2(
-            (-cols / 2.0f + 0.5f) * cellSize.x - (cols - 1) / 2f * gap.x,
-            (rows / 2.0f - 0.5f) * cellSize.y + (rows - 1) / 2f * gap.y
-        ) + centerPos;
-    }
-
-    public Vector2 GridToPosition(int row, int col)
-    {
-        return new Vector2(this.leftTop.x + col * cellSize.x + col * gap.x, this.leftTop.y - row * cellSize.y - row * gap.y);
     }
 
     public int Get(int row, int col)

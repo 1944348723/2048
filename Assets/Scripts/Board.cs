@@ -21,9 +21,8 @@ public struct TileAction
 enum Rotation { Clockwise90, Clockwise180, Clockwise270, None };
 public class Board
 {
-    // 固有
-    private const int rows = 4;
-    private const int cols = 4;
+    private int rows = 4;
+    private int cols = 4;
     private int[] generatableNumbers = new int[] { 2, 4 };
 
     // 注入
@@ -39,6 +38,8 @@ public class Board
     public void Init(GridMap gridMap)
     {
         this.gridMap = gridMap;
+        this.rows = gridMap.GetRowCount();
+        this.cols = gridMap.GetColCount();
         this.OnTick += ClearTileActions;
     }
 
@@ -71,7 +72,17 @@ public class Board
         });
     }
 
-    public bool Push(Direction dir, bool takeEffect)
+    public bool TryMove(Direction dir)
+    {
+        return ExecuteMove(dir, true);
+    }
+
+    public bool CanMove(Direction dir)
+    {
+        return ExecuteMove(dir, false);
+    }
+
+    private bool ExecuteMove(Direction dir, bool takeEffect)
     {
         bool hasChanged = false;
         switch (dir)

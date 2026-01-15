@@ -7,6 +7,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private UIScore uiScore;
     [SerializeField] private UIGameOver uiGameOver;
 
+    private const int Rows = 4;
+    private const int Cols = 4;
+
     private GridMap gridMap;
     private Board board;
     private ScoreSystem scoreSystem;
@@ -17,12 +20,12 @@ public class GameManager : MonoBehaviour
     {
         Test.TestPushLine();
 
-        gridMap = new GridMap(4, 4);
+        gridMap = new GridMap(Rows, Cols);
         board = new Board();
         scoreSystem = new ScoreSystem();
 
         board.Init(gridMap);
-        boardView.Init(gridMap);
+        boardView.Init(Rows, Cols);
         boardView.SetAnimationDuration(this.animationDuration);
         uiScore.SetHighScore(scoreSystem.GetHighScore());
 
@@ -43,18 +46,18 @@ public class GameManager : MonoBehaviour
         bool hasChanged = false;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            hasChanged = board.Push(Direction.Up, true);
+            hasChanged = board.TryMove(Direction.Up);
         } else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            hasChanged = board.Push(Direction.Down, true);
+            hasChanged = board.TryMove(Direction.Down);
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            hasChanged = board.Push(Direction.Left, true);
+            hasChanged = board.TryMove(Direction.Left);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            hasChanged = board.Push(Direction.Right, true);
+            hasChanged = board.TryMove(Direction.Right);
         }
         if (hasChanged)
         {
@@ -74,10 +77,10 @@ public class GameManager : MonoBehaviour
 
     private void CheckGameOver()
     {
-        if (board.Push(Direction.Up, false)
-            || board.Push(Direction.Down, false)
-            || board.Push(Direction.Left, false)
-            || board.Push(Direction.Right, false))
+        if (board.CanMove(Direction.Up)
+            || board.CanMove(Direction.Down)
+            || board.CanMove(Direction.Left)
+            || board.CanMove(Direction.Right))
         {
             this.enableInput = true;
         } else

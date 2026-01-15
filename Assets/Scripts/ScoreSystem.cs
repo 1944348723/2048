@@ -6,7 +6,7 @@ public class ScoreSystem
     public event System.Action<int> OnScoreChanged;
     public event System.Action<int> OnHighScoreChanged;
     private int score = 0;
-    private string highScoreKey = "HighScore";
+    private const string HighScoreKey = "HighScore";
 
     public void AddScore(int increment)
     {
@@ -16,15 +16,15 @@ public class ScoreSystem
 
     public int GetHighScore()
     {
-        return PlayerPrefs.GetInt(highScoreKey, 0);
+        return PlayerPrefs.GetInt(HighScoreKey, 0);
     }
 
     public bool TrySetHighScore()
     {
-        int highScore = PlayerPrefs.GetInt(highScoreKey, 0);
+        int highScore = PlayerPrefs.GetInt(HighScoreKey, 0);
         if (this.score <= highScore) return false;
 
-        PlayerPrefs.SetInt(highScoreKey, this.score);
+        PlayerPrefs.SetInt(HighScoreKey, this.score);
         OnHighScoreChanged?.Invoke(this.score);
         return true;
     }
@@ -32,6 +32,6 @@ public class ScoreSystem
     public void Reset()
     {
         this.score = 0;
-        this.OnScoreChanged(0);
+        this.OnScoreChanged?.Invoke(0);
     }
 }
