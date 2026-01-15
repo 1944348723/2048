@@ -4,6 +4,7 @@ using UnityEngine;
 public class ScoreSystem
 {
     public event System.Action<int> OnScoreChanged;
+    public event System.Action<int> OnHighScoreChanged;
     private int score = 0;
     private string highScoreKey = "HighScore";
 
@@ -24,6 +25,7 @@ public class ScoreSystem
         if (this.score <= highScore) return false;
 
         PlayerPrefs.SetInt(highScoreKey, this.score);
+        OnHighScoreChanged?.Invoke(this.score);
         return true;
     }
 }

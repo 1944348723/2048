@@ -5,6 +5,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float animationDuration = 0.1f;
     [SerializeField] private BoardView boardView;
     [SerializeField] private UIScore uiScore;
+    [SerializeField] private UIGameOver uiGameOver;
 
     private GridMap gridMap;
     private Board board;
@@ -29,6 +30,7 @@ public class GameManager : MonoBehaviour
         boardView.OnAnimationFinished += () => { CheckGameOver(); };
         board.OnMerge += newVal => { scoreSystem.AddScore(newVal); };
         scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
+        scoreSystem.OnHighScoreChanged += score => { uiGameOver.SetHighScore(score); };
 
         board.StartGame();
     }
@@ -75,6 +77,8 @@ public class GameManager : MonoBehaviour
 
     private void GameOver()
     {
+        scoreSystem.TrySetHighScore();
+        uiGameOver.gameObject.SetActive(true);
         Debug.Log("Game Over");
     }
 }
