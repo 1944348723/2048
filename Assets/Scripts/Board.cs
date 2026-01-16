@@ -10,7 +10,6 @@ public enum TileActionType { Move, Merge, Spawn };
 */
 public struct TileAction
 {
-
     public Vector2Int from1;
     public Vector2Int from2;
     public Vector2Int to;
