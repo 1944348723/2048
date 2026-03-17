@@ -1,14 +1,12 @@
+using System;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private float animationDuration = 0.1f;
+    [SerializeField] private GameConfig gameConfig;
     [SerializeField] private BoardView boardView;
     [SerializeField] private UIScore uiScore;
     [SerializeField] private UIGameOver uiGameOver;
-
-    private const int Rows = 4;
-    private const int Cols = 4;
 
     private GridMap gridMap;
     private Board board;
@@ -16,17 +14,25 @@ public class GameManager : MonoBehaviour
 
     private bool enableInput = true;
 
+    private void Awake()
+    {
+        if (!gameConfig)
+        {
+            throw new ArgumentNullException(nameof(gameConfig), "GameConfig is not assigned in the inspector.");
+        }
+    }
+
     void Start()
     {
         Test.TestPushLine();
 
-        gridMap = new GridMap(Rows, Cols);
+        gridMap = new GridMap(gameConfig.Rows, gameConfig.Columns);
         board = new Board();
         scoreSystem = new ScoreSystem();
 
         board.Init(gridMap);
-        boardView.Init(Rows, Cols);
-        boardView.SetAnimationDuration(this.animationDuration);
+        boardView.Init(gameConfig);
+        boardView.SetAnimationDuration(gameConfig.AnimationDuration);
         uiScore.SetHighScore(scoreSystem.GetHighScore());
 
         // 当前项目所有对象的生命周期都是整个游戏流程，没有销毁的情况，所以只有注册，没有解绑也没问题

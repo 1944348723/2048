@@ -1367,7 +1367,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d69c7e91470aaed43b1a446b9830d940, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animationDuration: 0.1
+  gameConfig: {fileID: 11400000, guid: 7a76c7deacafdac4a97a3cf4186fdf5f, type: 2}
   boardView: {fileID: 1641003733}
   uiScore: {fileID: 755209381}
   uiGameOver: {fileID: 1205699301}

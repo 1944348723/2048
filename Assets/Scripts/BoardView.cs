@@ -5,29 +5,35 @@ using UnityEngine;
 
 public class BoardView : MonoBehaviour
 {
-    [SerializeField] private Vector2 gap = new(0f, 0f);
-    [SerializeField] private GameObject CellBgPrefab;
-    [SerializeField] private GameObject NumberTilePrefab;
     [SerializeField] private GameObject tileBgContainer;
     [SerializeField] private GameObject numberTileContainer;
     [SerializeField] private TileColor[] colors;
 
     public event System.Action OnAnimationFinished;
 
-    // 布局
+    private GameObject CellBgPrefab;
+    private GameObject NumberTilePrefab;
     private int rows = 0;
     private int cols = 0;
-    private Vector2 cellSize = new(1, 1);
+    private Vector2 gap = new();
+    private float moveAnimationDuration;
+
+    private Vector2 cellSize = new();
     private Vector2 leftTop;
 
     private LinkedList<NumberTileView> freeTileViews;
     private NumberTileView[,] activeTileViews;
-    private float moveDuration = 0.1f;
 
-    public void Init(int rowCount, int colCount)
+    public void Init(GameConfig gameconfig)
     {
-        this.rows = rowCount;
-        this.cols = colCount;
+        this.rows = gameconfig.Rows;
+        this.cols = gameconfig.Columns;
+        this.gap.x = gameconfig.XGap;
+        this.gap.y = gameconfig.YGap;
+        this.moveAnimationDuration = gameconfig.AnimationDuration;
+        this.CellBgPrefab = gameconfig.CellBgPrefab;
+        this.NumberTilePrefab = gameconfig.NumberTilePrefab;
+
         ConfigureLayout();
         GenerateTileBgs();
         PreCreateTileViews();
@@ -52,7 +58,7 @@ public class BoardView : MonoBehaviour
 
     public void SetAnimationDuration(float duration)
     {
-        this.moveDuration = duration;
+        this.moveAnimationDuration = duration;
     }
 
     private void ConfigureLayout()
@@ -119,7 +125,7 @@ public class BoardView : MonoBehaviour
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.to.x, action.to.y] = tileView;
 
-                        Move(tileView.transform, tileView.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveDuration);
+                        Move(tileView.transform, tileView.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveAnimationDuration);
                         // tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
                     }
                     break;
@@ -129,20 +135,20 @@ public class BoardView : MonoBehaviour
                         var tileView2 = activeTileViews[action.from2.x, action.from2.y];
                         activeTileViews[action.from1.x, action.from1.y] = null;
                         activeTileViews[action.from2.x, action.from2.y] = null;
-                        Move(tileView1.transform, tileView1.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveDuration);
-                        Move(tileView2.transform, tileView2.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveDuration);
-                        StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveDuration));
-                        StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveDuration));
+                        Move(tileView1.transform, tileView1.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveAnimationDuration);
+                        Move(tileView2.transform, tileView2.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveAnimationDuration);
+                        StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveAnimationDuration));
+                        StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveAnimationDuration));
 
                         var newtileView = GetTileView(action.val);
                         activeTileViews[action.to.x, action.to.y] = newtileView;
                         newtileView.transform.localPosition = GridToPosition(action.to.x, action.to.y);
-                        StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveDuration));
+                        StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveAnimationDuration));
                     }
                     break;
             }
         }
-        StartCoroutine(DelayAction(() => { this.OnAnimationFinished?.Invoke(); }, moveDuration));
+        StartCoroutine(DelayAction(() => { this.OnAnimationFinished?.Invoke(); }, moveAnimationDuration));
     }
 
     private void Move(Transform target, Vector3 from, Vector3 to, float duration) {
