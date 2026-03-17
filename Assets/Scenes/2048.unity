@@ -624,41 +624,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 457269803}
   m_CullTransparentMesh: 1
---- !u!1 &458310711
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 458310712}
-  m_Layer: 0
-  m_Name: TileBgContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &458310712
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 458310711}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1641003729}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1562,41 +1527,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1403297643}
   m_CullTransparentMesh: 1
---- !u!1 &1538924660
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1538924661}
-  m_Layer: 0
-  m_Name: NumberTileContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1538924661
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1538924660}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1641003729}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1540317803
 GameObject:
   m_ObjectHideFlags: 0
@@ -1733,8 +1663,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1087935689}
-  - {fileID: 458310712}
-  - {fileID: 1538924661}
   m_Father: {fileID: 1177058309}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1762,23 +1690,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7a5c817ea6ab4a408a6d9963a9b9409, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gap: {x: 20, y: 20}
-  CellBgPrefab: {fileID: 5826476885482397903, guid: 14d318733122ed8458b6ba9c16ae5774, type: 3}
-  NumberTilePrefab: {fileID: 242726506707338721, guid: d19b053b6ce30a04c9e6552afe593c02, type: 3}
-  tileBgContainer: {fileID: 458310711}
-  numberTileContainer: {fileID: 1538924660}
-  colors:
-  - {fileID: 11400000, guid: eb6c468c1f94e8d45821b968e793d816, type: 2}
-  - {fileID: 11400000, guid: 1f85ec4e95b53aa40937bfdcb8c90120, type: 2}
-  - {fileID: 11400000, guid: 4351049f6f435cd42b26cd2aef65cef4, type: 2}
-  - {fileID: 11400000, guid: 083f94dcc6eb5ed42b3f8748544730eb, type: 2}
-  - {fileID: 11400000, guid: ef233e78a0a225242bb0c14a4979486c, type: 2}
-  - {fileID: 11400000, guid: f6a7fbfa16c435c4b89e31c3ccb568f0, type: 2}
-  - {fileID: 11400000, guid: dd920ab5515edf640bdd3e138c6fd312, type: 2}
-  - {fileID: 11400000, guid: 4ae2ad0fc583a2e409bdf87d6e092ce1, type: 2}
-  - {fileID: 11400000, guid: 78c8711e7b8080349b946350bffce3bf, type: 2}
-  - {fileID: 11400000, guid: 85650cbee322a894cbc15725d658c65a, type: 2}
-  - {fileID: 11400000, guid: ac6d22d08c5a2284ea355dea55bca019, type: 2}
 --- !u!1 &1728182640
 GameObject:
   m_ObjectHideFlags: 0

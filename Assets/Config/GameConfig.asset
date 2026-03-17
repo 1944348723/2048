@@ -14,6 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rows: 4
   columns: 4
+  xGap: 20
+  yGap: 20
   animationDuration: 0.1
   cellBgPrefab: {fileID: 5826476885482397903, guid: 14d318733122ed8458b6ba9c16ae5774, type: 3}
   numberTilePrefab: {fileID: 242726506707338721, guid: d19b053b6ce30a04c9e6552afe593c02, type: 3}
+  colors:
+  - {fileID: 11400000, guid: eb6c468c1f94e8d45821b968e793d816, type: 2}
+  - {fileID: 11400000, guid: 1f85ec4e95b53aa40937bfdcb8c90120, type: 2}
+  - {fileID: 11400000, guid: 4351049f6f435cd42b26cd2aef65cef4, type: 2}
+  - {fileID: 11400000, guid: 083f94dcc6eb5ed42b3f8748544730eb, type: 2}
+  - {fileID: 11400000, guid: ef233e78a0a225242bb0c14a4979486c, type: 2}
+  - {fileID: 11400000, guid: f6a7fbfa16c435c4b89e31c3ccb568f0, type: 2}
+  - {fileID: 11400000, guid: dd920ab5515edf640bdd3e138c6fd312, type: 2}
+  - {fileID: 11400000, guid: 4ae2ad0fc583a2e409bdf87d6e092ce1, type: 2}
+  - {fileID: 11400000, guid: 78c8711e7b8080349b946350bffce3bf, type: 2}
+  - {fileID: 11400000, guid: 85650cbee322a894cbc15725d658c65a, type: 2}
+  - {fileID: 11400000, guid: ac6d22d08c5a2284ea355dea55bca019, type: 2}

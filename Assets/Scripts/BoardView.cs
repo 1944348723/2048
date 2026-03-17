@@ -3,40 +3,80 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardView : MonoBehaviour
+public readonly struct BoardViewParams
 {
-    [SerializeField] private GameObject tileBgContainer;
-    [SerializeField] private GameObject numberTileContainer;
-    [SerializeField] private TileColor[] colors;
+    public int Rows { get; }
+    public int Cols { get; }
+    public int XGap { get; }
+    public int YGap { get; }
+    public float MoveAnimationDuration { get; }
+    public GameObject CellBgPrefab { get; }
+    public GameObject NumberTilePrefab { get; }
+    public TileColor[] Colors { get; }
 
-    public event System.Action OnAnimationFinished;
+    public BoardViewParams(
+        int rows,
+        int cols,
+        int xGap,
+        int yGap,
+        float moveAnimationDuration,
+        GameObject cellBgPrefab,
+        GameObject numberTilePrefab,
+        TileColor[] colors)
+    {
+        if (rows < 1) throw new ArgumentOutOfRangeException(nameof(rows), "rows must be greater than 0.");
+        if (cols < 1) throw new ArgumentOutOfRangeException(nameof(cols), "cols must be greater than 0.");
+        if (xGap < 0) throw new ArgumentOutOfRangeException(nameof(xGap), "xGap must be greater than or equal to 0.");
+        if (yGap < 0) throw new ArgumentOutOfRangeException(nameof(yGap), "yGap must be greater than or equal to 0.");
+        if (moveAnimationDuration < 0) throw new ArgumentOutOfRangeException(nameof(moveAnimationDuration), "moveAnimationDuration must be greater than or equal to 0.");
+        if (!cellBgPrefab) throw new ArgumentNullException(nameof(cellBgPrefab), "cellBgPrefab is required.");
+        if (!numberTilePrefab) throw new ArgumentNullException(nameof(numberTilePrefab), "numberTilePrefab is required.");
+        if (colors == null || colors.Length == 0) throw new ArgumentException("colors must not be null or empty.", nameof(colors));
 
-    private GameObject CellBgPrefab;
-    private GameObject NumberTilePrefab;
-    private int rows = 0;
-    private int cols = 0;
+        Rows = rows;
+        Cols = cols;
+        XGap = xGap;
+        YGap = yGap;
+        MoveAnimationDuration = moveAnimationDuration;
+        CellBgPrefab = cellBgPrefab;
+        NumberTilePrefab = numberTilePrefab;
+        Colors = colors;
+    }
+}
+
+public sealed class BoardView : MonoBehaviour
+{
+    private int rows;
+    private int cols;
     private Vector2 gap = new();
+    private TileColor[] colors;
+    private GameObject tileBgPrefab;
+    private GameObject numberTilePrefab;
+    private GameObject tileBgContainer;
+    private GameObject numberTileContainer;
     private float moveAnimationDuration;
+    private bool isInitialized;
+
+    public event System.Action AnimationFinished;
 
     private Vector2 cellSize = new();
     private Vector2 leftTop;
-
     private LinkedList<NumberTileView> freeTileViews;
     private NumberTileView[,] activeTileViews;
 
-    public void Init(GameConfig gameconfig)
+    public void Init(BoardViewParams initParams)
     {
-        this.rows = gameconfig.Rows;
-        this.cols = gameconfig.Columns;
-        this.gap.x = gameconfig.XGap;
-        this.gap.y = gameconfig.YGap;
-        this.moveAnimationDuration = gameconfig.AnimationDuration;
-        this.CellBgPrefab = gameconfig.CellBgPrefab;
-        this.NumberTilePrefab = gameconfig.NumberTilePrefab;
+        if (isInitialized)
+        {
+            throw new InvalidOperationException("BoardView has already been initialized.");
+        }
 
+        ApplyInitParams(initParams);
+        CreateContainers();
         ConfigureLayout();
         GenerateTileBgs();
         PreCreateTileViews();
+        isInitialized = true;
     }
 
     public void Bind(Board board)
@@ -56,15 +96,30 @@ public class BoardView : MonoBehaviour
         }
     }
 
-    public void SetAnimationDuration(float duration)
+    private void ApplyInitParams(BoardViewParams initParams)
     {
-        this.moveAnimationDuration = duration;
+        this.rows = initParams.Rows;
+        this.cols = initParams.Cols;
+        this.gap.x = initParams.XGap;
+        this.gap.y = initParams.YGap;
+        this.moveAnimationDuration = initParams.MoveAnimationDuration;
+        this.tileBgPrefab = initParams.CellBgPrefab;
+        this.numberTilePrefab = initParams.NumberTilePrefab;
+        this.colors = initParams.Colors;
+    }
+
+    private void CreateContainers()
+    {
+        tileBgContainer = new GameObject("TileBgContainer");
+        tileBgContainer.transform.SetParent(transform, false);
+        numberTileContainer = new GameObject("NumberTileContainer");
+        numberTileContainer.transform.SetParent(transform, false);
     }
 
     private void ConfigureLayout()
     {
-        cellSize.x = CellBgPrefab.GetComponent<RectTransform>().rect.width;
-        cellSize.y = CellBgPrefab.GetComponent<RectTransform>().rect.height;
+        cellSize.x = tileBgPrefab.GetComponent<RectTransform>().rect.width;
+        cellSize.y = tileBgPrefab.GetComponent<RectTransform>().rect.height;
         this.leftTop = new Vector2(
             (-cols / 2.0f + 0.5f) * cellSize.x - (cols - 1) / 2f * gap.x,
             (rows / 2.0f - 0.5f) * cellSize.y + (rows - 1) / 2f * gap.y
@@ -82,7 +137,7 @@ public class BoardView : MonoBehaviour
         {
             for (int c = 0; c < cols; ++c)
             {
-                GameObject tileBg = Instantiate(CellBgPrefab);
+                GameObject tileBg = Instantiate(tileBgPrefab);
                 tileBg.transform.SetParent(tileBgContainer.transform, false);
                 tileBg.transform.localPosition = GridToPosition(r, c);
             }
@@ -97,7 +152,7 @@ public class BoardView : MonoBehaviour
         // 多创建几个，假设棋盘摆满2，这时候移动的话，合并需要额外8个，生成需要额外1个，所以最极端情况下需要额外9个
         for (int i = 0; i < count + 9; ++i)
         {
-            GameObject tile = Instantiate(NumberTilePrefab);
+            GameObject tile = Instantiate(numberTilePrefab);
             tile.transform.SetParent(numberTileContainer.transform, false);
             NumberTileView tileComponent = tile.GetComponent<NumberTileView>();
             freeTileViews.AddFirst(tileComponent);
@@ -148,7 +203,7 @@ public class BoardView : MonoBehaviour
                     break;
             }
         }
-        StartCoroutine(DelayAction(() => { this.OnAnimationFinished?.Invoke(); }, moveAnimationDuration));
+        StartCoroutine(DelayAction(() => { this.AnimationFinished?.Invoke(); }, moveAnimationDuration));
     }
 
     private void Move(Transform target, Vector3 from, Vector3 to, float duration) {
