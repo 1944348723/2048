@@ -81,7 +81,7 @@ public sealed class BoardView : MonoBehaviour
 
     public void Bind(Board board)
     {
-        board.OnTick += UpdateView;
+        board.Ticked += UpdateView;
     }
 
     public void Reset()
@@ -164,40 +164,40 @@ public sealed class BoardView : MonoBehaviour
     {
         foreach (var action in actions)
         {
-            switch (action.actionType)
+            switch (action.ActionType)
             {
                 case TileActionType.Spawn:
                     {
-                        var tileView = GetTileView(action.val);
-                        tileView.transform.localPosition = GridToPosition(action.to.x, action.to.y);
-                        activeTileViews[action.to.x, action.to.y] = tileView;
+                        var tileView = GetTileView(action.Val);
+                        tileView.transform.localPosition = GridToPosition(action.To.x, action.To.y);
+                        activeTileViews[action.To.x, action.To.y] = tileView;
                         tileView.gameObject.SetActive(true);
                     }
                     break;
                 case TileActionType.Move:
                     {
-                        var tileView = activeTileViews[action.from1.x, action.from1.y];
-                        activeTileViews[action.from1.x, action.from1.y] = null;
-                        activeTileViews[action.to.x, action.to.y] = tileView;
+                        var tileView = activeTileViews[action.From1.x, action.From1.y];
+                        activeTileViews[action.From1.x, action.From1.y] = null;
+                        activeTileViews[action.To.x, action.To.y] = tileView;
 
-                        Move(tileView.transform, tileView.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveAnimationDuration);
+                        Move(tileView.transform, tileView.transform.localPosition, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
                         // tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
                     }
                     break;
                 case TileActionType.Merge:
                     {
-                        var tileView1 = activeTileViews[action.from1.x, action.from1.y];
-                        var tileView2 = activeTileViews[action.from2.x, action.from2.y];
-                        activeTileViews[action.from1.x, action.from1.y] = null;
-                        activeTileViews[action.from2.x, action.from2.y] = null;
-                        Move(tileView1.transform, tileView1.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveAnimationDuration);
-                        Move(tileView2.transform, tileView2.transform.localPosition, GridToPosition(action.to.x, action.to.y), moveAnimationDuration);
+                        var tileView1 = activeTileViews[action.From1.x, action.From1.y];
+                        var tileView2 = activeTileViews[action.From2.x, action.From2.y];
+                        activeTileViews[action.From1.x, action.From1.y] = null;
+                        activeTileViews[action.From2.x, action.From2.y] = null;
+                        Move(tileView1.transform, tileView1.transform.localPosition, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
+                        Move(tileView2.transform, tileView2.transform.localPosition, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
                         StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveAnimationDuration));
                         StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveAnimationDuration));
 
-                        var newtileView = GetTileView(action.val);
-                        activeTileViews[action.to.x, action.to.y] = newtileView;
-                        newtileView.transform.localPosition = GridToPosition(action.to.x, action.to.y);
+                        var newtileView = GetTileView(action.Val);
+                        activeTileViews[action.To.x, action.To.y] = newtileView;
+                        newtileView.transform.localPosition = GridToPosition(action.To.x, action.To.y);
                         StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveAnimationDuration));
                     }
                     break;

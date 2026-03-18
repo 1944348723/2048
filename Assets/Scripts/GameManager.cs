@@ -52,7 +52,7 @@ public class GameManager : MonoBehaviour
         // 当出现UI反复创建销毁之类的涉及生命周期的时候，要考虑进一步管理
         boardView.Bind(board);
         boardView.AnimationFinished += () => { CheckGameOver(); };
-        board.OnMerge += newVal => { scoreSystem.AddScore(newVal); };
+        board.Merged += newVal => { scoreSystem.AddScore(newVal); };
         scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
         scoreSystem.OnHighScoreChanged += score => { uiGameOver.ShowHighScore(score); };
         uiGameOver.OnPlayAgain += Restart;

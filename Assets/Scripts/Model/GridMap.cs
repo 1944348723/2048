@@ -1,25 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
-public enum Direction { Up, Down, Left, Right };
-
-public static class DirectionExtensions {
-    public static Vector2Int ToVector(this Direction dir) {
-        switch (dir) {
-            case Direction.Up:
-                return new Vector2Int(-1, 0);
-            case Direction.Down:
-                return new Vector2Int(1, 0);
-            case Direction.Left:
-                return new Vector2Int(0, -1);
-            case Direction.Right:
-                return new Vector2Int(0, 1);
-            default:
-                return new Vector2Int(0, 0);
-        }
-    }
-}
 
 public class GridMap
 {
@@ -27,13 +9,16 @@ public class GridMap
     private int rows;
     private int cols;
 
-    // 运行时
-    private HashSet<Vector2Int> emptyCells = new HashSet<Vector2Int>();
+    // 值为0时表示空格子
+    private readonly HashSet<Vector2Int> emptyCells = new();
 
     public GridMap(int rows, int cols)
     {
+        if (rows < 1) throw new ArgumentOutOfRangeException(nameof(rows), "rows must be greater than 0.");
+        if (cols < 1) throw new ArgumentOutOfRangeException(nameof(cols), "cols must be greater than 0.");
         this.rows = rows;
         this.cols = cols;
+
         this.map = new int[rows, cols];
         for (int r = 0; r < rows; ++r)
         {
@@ -47,11 +32,13 @@ public class GridMap
 
     public int Get(int row, int col)
     {
+        CheckBounds(row, col);
         return map[row, col];
     }
 
     public void Set(int row, int col, int val)
     {
+        CheckBounds(row, col);
         if (map[row, col] == 0 && val != 0) {
             emptyCells.Remove(new Vector2Int(row, col));
         } else if (map[row, col] != 0 && val == 0) {
@@ -61,8 +48,16 @@ public class GridMap
     }
 
     // O(n)
-    public Vector2Int GetRandomEmptyCoordinate() {
-        return emptyCells.ElementAt(Random.Range(0, emptyCells.Count));
+    public bool TryGetRandomEmptyCoordinate(out Vector2Int coordinate)
+    {
+        if (emptyCells.Count == 0)
+        {
+            coordinate = default;
+            return false;
+        }
+
+        coordinate = emptyCells.ElementAt(UnityEngine.Random.Range(0, emptyCells.Count));
+        return true;
     }
 
     public void Fill(int val)
@@ -87,9 +82,7 @@ public class GridMap
             }
         }
         map = newMap;
-        int temp = rows;
-        this.rows = cols;
-        this.cols = temp;
+        Swap(ref rows, ref cols);
         this.RebuildEmptyCells();
     }
 
@@ -118,9 +111,7 @@ public class GridMap
             }
         }
         map = newMap;
-        int temp = rows;
-        rows = cols;
-        cols = temp;
+        Swap(ref rows, ref cols);
         this.RebuildEmptyCells();
     }
 
@@ -184,5 +175,18 @@ public class GridMap
                 }
             }
         }
+    }
+
+    private void CheckBounds(int row, int col)
+    {
+        if (row < 0 || row >= rows || col < 0 || col >= cols)
+        {
+            throw new IndexOutOfRangeException("Row or column is out of bounds.");
+        }
+    }
+
+    private void Swap(ref int a, ref int b)
+    {
+        (b, a) = (a, b);
     }
 }
