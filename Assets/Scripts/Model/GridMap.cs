@@ -30,6 +30,13 @@ public class GridMap
         }
     }
 
+    public int[,] Data()
+    {
+        int[,] copy = new int[rows, cols];
+        Array.Copy(map, copy, map.Length);
+        return copy;
+    }
+
     public int Get(int row, int col)
     {
         CheckBounds(row, col);
@@ -151,6 +158,11 @@ public class GridMap
     public int GetColCount()
     {
         return this.cols;
+    }
+
+    public bool IsFull()
+    {
+        return emptyCells.Count == 0;
     }
 
     public void Display()

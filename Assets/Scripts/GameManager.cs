@@ -98,15 +98,12 @@ public class GameManager : MonoBehaviour
 
     private void CheckGameOver()
     {
-        if (board.CanMove(Direction.Up)
-            || board.CanMove(Direction.Down)
-            || board.CanMove(Direction.Left)
-            || board.CanMove(Direction.Right))
-        {
-            this.enableInput = true;
-        } else
+        if (board.IsGameOver())
         {
             GameOver();
+        } else
+        {
+            this.enableInput = true;
         }
     }
 
