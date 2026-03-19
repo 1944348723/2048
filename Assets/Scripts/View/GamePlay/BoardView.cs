@@ -52,13 +52,13 @@ public sealed class BoardView : MonoBehaviour
     private TileColor[] colors;
     private GameObject tileBgPrefab;
     private GameObject numberTilePrefab;
-    private GameObject tileBgContainer;
-    private GameObject numberTileContainer;
     private float moveAnimationDuration;
     private bool isInitialized;
 
     public event System.Action AnimationFinished;
 
+    private GameObject tileBgContainer;
+    private GameObject numberTileContainer;
     private Vector2 cellSize = new();
     private Vector2 leftTop;
     private LinkedList<NumberTileView> freeTileViews;
@@ -79,11 +79,6 @@ public sealed class BoardView : MonoBehaviour
         isInitialized = true;
     }
 
-    public void Bind(Board board)
-    {
-        board.Ticked += UpdateView;
-    }
-
     public void Reset()
     {
         foreach (var tile in activeTileViews)
@@ -95,72 +90,8 @@ public sealed class BoardView : MonoBehaviour
             }
         }
     }
-
-    private void ApplyInitParams(BoardViewParams initParams)
-    {
-        this.rows = initParams.Rows;
-        this.cols = initParams.Cols;
-        this.gap.x = initParams.XGap;
-        this.gap.y = initParams.YGap;
-        this.moveAnimationDuration = initParams.MoveAnimationDuration;
-        this.tileBgPrefab = initParams.CellBgPrefab;
-        this.numberTilePrefab = initParams.NumberTilePrefab;
-        this.colors = initParams.Colors;
-    }
-
-    private void CreateContainers()
-    {
-        tileBgContainer = new GameObject("TileBgContainer");
-        tileBgContainer.transform.SetParent(transform, false);
-        numberTileContainer = new GameObject("NumberTileContainer");
-        numberTileContainer.transform.SetParent(transform, false);
-    }
-
-    private void ConfigureLayout()
-    {
-        cellSize.x = tileBgPrefab.GetComponent<RectTransform>().rect.width;
-        cellSize.y = tileBgPrefab.GetComponent<RectTransform>().rect.height;
-        this.leftTop = new Vector2(
-            (-cols / 2.0f + 0.5f) * cellSize.x - (cols - 1) / 2f * gap.x,
-            (rows / 2.0f - 0.5f) * cellSize.y + (rows - 1) / 2f * gap.y
-        );
-    }
-
-    private Vector2 GridToPosition(int row, int col)
-    {
-        return new Vector2(this.leftTop.x + col * cellSize.x + col * gap.x, this.leftTop.y - row * cellSize.y - row * gap.y);
-    }
-
-    private void GenerateTileBgs()
-    {
-        for (int r = 0; r < rows; ++r)
-        {
-            for (int c = 0; c < cols; ++c)
-            {
-                GameObject tileBg = Instantiate(tileBgPrefab);
-                tileBg.transform.SetParent(tileBgContainer.transform, false);
-                tileBg.transform.localPosition = GridToPosition(r, c);
-            }
-        }
-    }
-
-    private void PreCreateTileViews()
-    {
-        freeTileViews = new LinkedList<NumberTileView>();
-        activeTileViews = new NumberTileView[rows, cols];
-        int count = rows * cols;
-        // 多创建几个，假设棋盘摆满2，这时候移动的话，合并需要额外8个，生成需要额外1个，所以最极端情况下需要额外9个
-        for (int i = 0; i < count + 9; ++i)
-        {
-            GameObject tile = Instantiate(numberTilePrefab);
-            tile.transform.SetParent(numberTileContainer.transform, false);
-            NumberTileView tileComponent = tile.GetComponent<NumberTileView>();
-            freeTileViews.AddFirst(tileComponent);
-            tile.SetActive(false);
-        }
-    }
-
-    private void UpdateView(List<TileAction> actions)
+    
+    public void UpdateView(List<TileAction> actions)
     {
         foreach (var action in actions)
         {
@@ -204,6 +135,71 @@ public sealed class BoardView : MonoBehaviour
             }
         }
         StartCoroutine(DelayAction(() => { this.AnimationFinished?.Invoke(); }, moveAnimationDuration));
+    }
+
+    private void ApplyInitParams(BoardViewParams initParams)
+    {
+        this.rows = initParams.Rows;
+        this.cols = initParams.Cols;
+        this.gap.x = initParams.XGap;
+        this.gap.y = initParams.YGap;
+        this.moveAnimationDuration = initParams.MoveAnimationDuration;
+        this.tileBgPrefab = initParams.CellBgPrefab;
+        this.numberTilePrefab = initParams.NumberTilePrefab;
+        this.colors = initParams.Colors;
+    }
+
+    private void CreateContainers()
+    {
+        tileBgContainer = new GameObject("TileBgContainer");
+        tileBgContainer.transform.SetParent(transform, false);
+        numberTileContainer = new GameObject("NumberTileContainer");
+        numberTileContainer.transform.SetParent(transform, false);
+    }
+
+    private void ConfigureLayout()
+    {
+        cellSize.x = tileBgPrefab.GetComponent<RectTransform>().rect.width;
+        cellSize.y = tileBgPrefab.GetComponent<RectTransform>().rect.height;
+        this.leftTop = new Vector2(
+            (-cols / 2.0f + 0.5f) * cellSize.x - (cols - 1) / 2f * gap.x,
+            (rows / 2.0f - 0.5f) * cellSize.y + (rows - 1) / 2f * gap.y
+        );
+    }
+
+    private void GenerateTileBgs()
+    {
+        for (int r = 0; r < rows; ++r)
+        {
+            for (int c = 0; c < cols; ++c)
+            {
+                GameObject tileBg = Instantiate(tileBgPrefab);
+                tileBg.transform.SetParent(tileBgContainer.transform);
+                tileBg.transform.localPosition = GridToPosition(r, c);
+            }
+        }
+    }
+
+    private Vector2 GridToPosition(int row, int col)
+    {
+        return new Vector2(this.leftTop.x + col * cellSize.x + col * gap.x, this.leftTop.y - row * cellSize.y - row * gap.y);
+    }
+
+
+    private void PreCreateTileViews()
+    {
+        freeTileViews = new LinkedList<NumberTileView>();
+        activeTileViews = new NumberTileView[rows, cols];
+        int count = rows * cols;
+        // 多创建几个，假设棋盘摆满2，这时候移动的话，合并需要额外8个，生成需要额外1个，所以最极端情况下需要额外9个
+        for (int i = 0; i < count + 9; ++i)
+        {
+            GameObject tile = Instantiate(numberTilePrefab);
+            tile.transform.SetParent(numberTileContainer.transform);
+            NumberTileView tileComponent = tile.GetComponent<NumberTileView>();
+            freeTileViews.AddFirst(tileComponent);
+            tile.SetActive(false);
+        }
     }
 
     private void Move(Transform target, Vector3 from, Vector3 to, float duration) {
