@@ -6,7 +6,7 @@ enum Rotation { Clockwise90, Clockwise180, Clockwise270, None };
 
 public class Board
 {
-    public int Score { get; private set; } = 0;
+    public int Score { get; private set; }
 
     // 注入依赖数据结构
     private GridMap gridMap;
@@ -37,6 +37,7 @@ public class Board
     {
         EnsureInitialized();
 
+        this.Score = 0;
         this.gridMap.Fill(0);
         for (int i = 0; i < 2; ++i)
         {

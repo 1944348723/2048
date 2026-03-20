@@ -11,8 +11,7 @@ public class GameManager : MonoBehaviour
 
     private GridMap gridMap;
     private Board board;
-
-    private bool enableInput = true;
+    private KeyboardInputReader inputReader;
 
     private void Awake()
     {
@@ -32,6 +31,7 @@ public class GameManager : MonoBehaviour
 
         gridMap = new GridMap(gameConfig.Rows, gameConfig.Columns);
         board = new Board();
+        inputReader = gameObject.AddComponent<KeyboardInputReader>();
 
         board.Init(gridMap);
         BoardViewParams boardViewParams = new(
@@ -61,31 +61,20 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (!enableInput) return;
+        if (!inputReader.enabled) return;
+
+        Direction direction = MapDirection(inputReader.GetCurrentDirection());
+        if (direction == Direction.None) return;
 
         bool hasChanged = false;
-        List<TileAction> actions = null;
-        if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            actions = board.TryMove(Direction.Up);
-        } else if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            actions = board.TryMove(Direction.Down);
-        }
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            actions = board.TryMove(Direction.Left);
-        }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            actions = board.TryMove(Direction.Right);
-        }
+        List<TileAction> actions = board.TryMove(direction);
         if (actions == null) return;
 
         hasChanged = actions.Count > 0;
+        // 有变化的话暂时禁止输入，等动画结束
         if (hasChanged)
         {
-            enableInput = false;
+            inputReader.SetActive(false);
         }
         boardView.UpdateView(actions);
         UpdateUI();
@@ -110,7 +99,7 @@ public class GameManager : MonoBehaviour
             GameOver();
         } else
         {
-            this.enableInput = true;
+            inputReader.SetActive(true);
         }
     }
 
@@ -135,5 +124,18 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.SetInt("HighScore", board.Score);
             uiScore.SetHighScore(board.Score);
         }
+    }
+
+    private Direction MapDirection(InputDirection inputDirection)
+    {
+        return inputDirection switch
+        {
+            InputDirection.Up => Direction.Up,
+            InputDirection.Down => Direction.Down,
+            InputDirection.Left => Direction.Left,
+            InputDirection.Right => Direction.Right,
+            InputDirection.None => Direction.None,
+            _ => throw new ArgumentOutOfRangeException(nameof(inputDirection), $"Unhandled input direction: {inputDirection}")
+        };
     }
 }

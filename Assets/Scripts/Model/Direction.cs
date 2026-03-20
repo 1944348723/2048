@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum Direction { Up, Down, Left, Right };
+public enum Direction { None, Up, Down, Left, Right };
 
 public static class DirectionExtensions {
     public static Vector2Int ToVector(this Direction dir) {
