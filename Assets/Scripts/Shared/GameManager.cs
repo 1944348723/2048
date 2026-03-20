@@ -11,7 +11,6 @@ public class GameManager : MonoBehaviour
 
     private GridMap gridMap;
     private Board board;
-    private ScoreSystem scoreSystem;
 
     private bool enableInput = true;
 
@@ -33,7 +32,6 @@ public class GameManager : MonoBehaviour
 
         gridMap = new GridMap(gameConfig.Rows, gameConfig.Columns);
         board = new Board();
-        scoreSystem = new ScoreSystem();
 
         board.Init(gridMap);
         BoardViewParams boardViewParams = new(
@@ -47,13 +45,14 @@ public class GameManager : MonoBehaviour
             gameConfig.Colors
         );
         boardView.Init(boardViewParams);
-        uiScore.SetHighScore(scoreSystem.GetHighScore());
+
+
+        uiScore.SetHighScore(PlayerPrefs.GetInt("HighScore", 0));
+        uiScore.SetScore(0);
 
         // 当前项目所有对象的生命周期都是整个游戏流程，没有销毁的情况，所以只有注册，没有解绑也没问题
         // 当出现UI反复创建销毁之类的涉及生命周期的时候，要考虑进一步管理
         boardView.AnimationFinished += () => { CheckGameOver(); };
-        scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
-        scoreSystem.OnHighScoreChanged += score => { uiGameOver.ShowHighScore(score); };
         uiGameOver.OnPlayAgain += Restart;
 
         List<TileAction> actions = board.StartGame();
@@ -89,16 +88,16 @@ public class GameManager : MonoBehaviour
             enableInput = false;
         }
         boardView.UpdateView(actions);
-        scoreSystem.SetScore(board.Score);
+        UpdateUI();
     }
 
     private void Restart()
     {
         boardView.Reset();
-        scoreSystem.Reset();
         uiGameOver.Reset();
         uiGameOver.gameObject.SetActive(false);
-        uiScore.SetHighScore(scoreSystem.GetHighScore());
+        uiScore.SetScore(0);
+        uiScore.SetHighScore(PlayerPrefs.GetInt("HighScore", 0));
 
         var actions = board.StartGame();
         boardView.UpdateView(actions);
@@ -117,8 +116,24 @@ public class GameManager : MonoBehaviour
 
     private void GameOver()
     {
-        scoreSystem.TrySetHighScore();
+        TryUpdateHighScore();
+        uiGameOver.ShowHighScore(PlayerPrefs.GetInt("HighScore", 0));
         uiGameOver.gameObject.SetActive(true);
         Debug.Log("Game Over");
+    }
+
+    private void UpdateUI()
+    {
+        uiScore.SetScore(board.Score);
+    }
+
+    private void TryUpdateHighScore()
+    {
+        int highScore = PlayerPrefs.GetInt("HighScore", 0);
+        if (board.Score > highScore)
+        {
+            PlayerPrefs.SetInt("HighScore", board.Score);
+            uiScore.SetHighScore(board.Score);
+        }
     }
 }
