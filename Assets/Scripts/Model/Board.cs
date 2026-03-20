@@ -6,21 +6,19 @@ enum Rotation { Clockwise90, Clockwise180, Clockwise270, None };
 
 public class Board
 {
+    public int Score { get; private set; } = 0;
+
+    // 注入依赖数据结构
+    private GridMap gridMap;
     private int rows;
     private int cols;
     // TODO: 可配置
     private readonly int[] generatableNumbers = new int[] { 2, 4 };
 
-    // 注入依赖数据结构
-    private GridMap gridMap;
-
     private bool initialized = false;
     private Rotation currentRotation = Rotation.None;
     private readonly List<TileAction> tileActions = new();
 
-    public event System.Action<List<TileAction>> Ticked;  // number, row, col
-    public event System.Action<int> Merged;
-    
     public bool Init(GridMap gridMap)
     {
         if (initialized) {
@@ -31,13 +29,11 @@ public class Board
         this.gridMap = gridMap;
         this.rows = gridMap.GetRowCount();
         this.cols = gridMap.GetColCount();
-        // 自己订阅自己的事件，不用解除订阅
-        this.Ticked += ClearTileActions;
         this.initialized = true;
         return true;
     }
 
-    public void StartGame()
+    public List<TileAction> StartGame()
     {
         EnsureInitialized();
 
@@ -48,9 +44,10 @@ public class Board
         }
         // 日志打印棋盘
         gridMap.Display();
-        
-        // 通知表现层绘制
-        Ticked?.Invoke(new List<TileAction>(tileActions));
+
+        List<TileAction> actionsToReturn = new(this.tileActions);
+        ClearTileActions();
+        return actionsToReturn;
     }
 
     public bool IsGameOver()
@@ -58,7 +55,7 @@ public class Board
         return this.gridMap.IsFull() && !HasConnectedSameTile();
     }
 
-    public bool TryMove(Direction dir)
+    public List<TileAction> TryMove(Direction dir)
     {
         bool hasChanged = false;
         switch (dir)
@@ -93,9 +90,11 @@ public class Board
             GenerateRandomNumber();
             // 绘制
             gridMap.Display();
-            Ticked?.Invoke(new List<TileAction>(tileActions));
         }
-        return hasChanged;
+
+        List<TileAction> actionsToReturn = new(this.tileActions);
+        ClearTileActions();
+        return actionsToReturn;
     }
 
     private bool HasConnectedSameTile()
@@ -183,7 +182,7 @@ public class Board
                 Vector2Int to = ToCoordinateBeforeRotation(new Vector2Int(row, write));
 
                 this.tileActions.Add(TileAction.Merge(from1, from2, to, val * 2));
-                this.Merged?.Invoke(2 * val);
+                Score += val * 2;
             }
             else if (sourceCol != write) // 移动
             {
@@ -220,9 +219,8 @@ public class Board
         this.tileActions.Add(TileAction.Spawn(coordinate, num));
     }
 
-    private void ClearTileActions(List<TileAction> actions)
+    private void ClearTileActions()
     {
-        // 不要清除传入的actions，传入的是给view层的
         this.tileActions.Clear();
     }
 

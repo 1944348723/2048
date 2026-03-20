@@ -14,6 +14,12 @@ public class ScoreSystem
         this.OnScoreChanged?.Invoke(this.score);
     }
 
+    public void SetScore(int newScore)
+    {
+        this.score = newScore;
+        this.OnScoreChanged?.Invoke(this.score);
+    }
+
     public int GetHighScore()
     {
         return PlayerPrefs.GetInt(HighScoreKey, 0);

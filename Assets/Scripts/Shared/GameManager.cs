@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -50,14 +51,13 @@ public class GameManager : MonoBehaviour
 
         // 当前项目所有对象的生命周期都是整个游戏流程，没有销毁的情况，所以只有注册，没有解绑也没问题
         // 当出现UI反复创建销毁之类的涉及生命周期的时候，要考虑进一步管理
-        board.Ticked += boardView.UpdateView;
         boardView.AnimationFinished += () => { CheckGameOver(); };
-        board.Merged += newVal => { scoreSystem.AddScore(newVal); };
         scoreSystem.OnScoreChanged += score => { uiScore.SetScore(score); };
         scoreSystem.OnHighScoreChanged += score => { uiGameOver.ShowHighScore(score); };
         uiGameOver.OnPlayAgain += Restart;
 
-        board.StartGame();
+        List<TileAction> actions = board.StartGame();
+        boardView.UpdateView(actions);
     }
 
     void Update()
@@ -65,35 +65,43 @@ public class GameManager : MonoBehaviour
         if (!enableInput) return;
 
         bool hasChanged = false;
+        List<TileAction> actions = null;
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            hasChanged = board.TryMove(Direction.Up);
+            actions = board.TryMove(Direction.Up);
         } else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            hasChanged = board.TryMove(Direction.Down);
+            actions = board.TryMove(Direction.Down);
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            hasChanged = board.TryMove(Direction.Left);
+            actions = board.TryMove(Direction.Left);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            hasChanged = board.TryMove(Direction.Right);
+            actions = board.TryMove(Direction.Right);
         }
+        if (actions == null) return;
+
+        hasChanged = actions.Count > 0;
         if (hasChanged)
         {
             enableInput = false;
         }
+        boardView.UpdateView(actions);
+        scoreSystem.SetScore(board.Score);
     }
 
     private void Restart()
     {
         boardView.Reset();
-        board.StartGame();
         scoreSystem.Reset();
         uiGameOver.Reset();
         uiGameOver.gameObject.SetActive(false);
         uiScore.SetHighScore(scoreSystem.GetHighScore());
+
+        var actions = board.StartGame();
+        boardView.UpdateView(actions);
     }
 
     private void CheckGameOver()
