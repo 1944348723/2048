@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -63,6 +62,7 @@ public sealed class BoardView : MonoBehaviour
     private Vector2 leftTop;
     private LinkedList<NumberTileView> freeTileViews;
     private NumberTileView[,] activeTileViews;
+    private int tweenCount = 0;
 
     public void Init(BoardViewParams initParams)
     {
@@ -111,30 +111,38 @@ public sealed class BoardView : MonoBehaviour
                         activeTileViews[action.From1.x, action.From1.y] = null;
                         activeTileViews[action.To.x, action.To.y] = tileView;
 
-                        Move(tileView.transform, tileView.transform.localPosition, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
-                        // tileView.transform.position = gridMap.GridToWorld(action.to.x, action.to.y);
+                        Move(tileView.transform, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
                     }
                     break;
                 case TileActionType.Merge:
                     {
+                        // 移动并消失
                         var tileView1 = activeTileViews[action.From1.x, action.From1.y];
                         var tileView2 = activeTileViews[action.From2.x, action.From2.y];
                         activeTileViews[action.From1.x, action.From1.y] = null;
                         activeTileViews[action.From2.x, action.From2.y] = null;
-                        Move(tileView1.transform, tileView1.transform.localPosition, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
-                        Move(tileView2.transform, tileView2.transform.localPosition, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
-                        StartCoroutine(DelayAction(() => { tileView1.gameObject.SetActive(false); freeTileViews.AddFirst(tileView1); }, moveAnimationDuration));
-                        StartCoroutine(DelayAction(() => { tileView2.gameObject.SetActive(false); freeTileViews.AddFirst(tileView2); }, moveAnimationDuration));
+                        Move(tileView1.transform, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
+                        Move(tileView2.transform, GridToPosition(action.To.x, action.To.y), moveAnimationDuration);
+                        var tween = DOVirtual.DelayedCall(moveAnimationDuration, () => {
+                            tileView1.gameObject.SetActive(false);
+                            tileView2.gameObject.SetActive(false);
+                            freeTileViews.AddFirst(tileView1);
+                            freeTileViews.AddFirst(tileView2);
+                        });
+                        Track(tween);
 
+                        // 延迟出现新tile
                         var newtileView = GetTileView(action.Val);
                         activeTileViews[action.To.x, action.To.y] = newtileView;
                         newtileView.transform.localPosition = GridToPosition(action.To.x, action.To.y);
-                        StartCoroutine(DelayAction(() => { newtileView.gameObject.SetActive(true); }, moveAnimationDuration));
+                        var tween2 = DOVirtual.DelayedCall(moveAnimationDuration, () => {
+                            newtileView.gameObject.SetActive(true);
+                        });
+                        Track(tween2);
                     }
                     break;
             }
         }
-        StartCoroutine(DelayAction(() => { this.AnimationFinished?.Invoke(); }, moveAnimationDuration));
     }
 
     private void ApplyInitParams(BoardViewParams initParams)
@@ -202,18 +210,26 @@ public sealed class BoardView : MonoBehaviour
         }
     }
 
-    private void Move(Transform target, Vector3 from, Vector3 to, float duration) {
-        StartCoroutine(MoveCoroutine(target, from, to, duration));
+    private void Move(Transform target, Vector3 to, float duration) {
+        var tween = DoTween.To(
+            () => target.localPosition,
+            pos => target.localPosition = pos,
+            to,
+            duration
+        );
+        Track(tween);
     }
 
-    private IEnumerator MoveCoroutine(Transform target, Vector3 from, Vector3 to, float duration) {
-        float elapsed = 0f;
-        while (elapsed < duration) {
-            target.localPosition = Vector3.Lerp(from, to, elapsed / duration);
-            elapsed += Time.deltaTime;
-            yield return null;
+    private void Track(TweenBase tween) {
+        ++tweenCount;
+        tween.OnComplete(FinishOne);
+    }
+
+    private void FinishOne() {
+        --tweenCount;
+        if (tweenCount == 0) {
+            AnimationFinished?.Invoke();
         }
-        target.localPosition = to;
     }
 
     private NumberTileView GetTileView(int num)
@@ -223,11 +239,6 @@ public sealed class BoardView : MonoBehaviour
         tileView.SetNumber(num);
         tileView.Apply(GetColor(num));
         return tileView;
-    }
-
-    private IEnumerator DelayAction(Action action, float delay) {
-        yield return new WaitForSeconds(delay);
-        action();
     }
 
     private TileColor GetColor(int num)
