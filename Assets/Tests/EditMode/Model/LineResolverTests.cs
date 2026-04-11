@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 
+/// <summary>
+/// 核心合并算法单元测试
+/// 这个测试是我自己写的
+/// </summary>
 public class LineResolverTests 
 {
     public static IEnumerable<TestCaseData> DoNothingCases()

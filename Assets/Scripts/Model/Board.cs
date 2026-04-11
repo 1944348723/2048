@@ -6,7 +6,7 @@ enum Rotation { Clockwise90, Clockwise180, Clockwise270, None };
 
 public class Board
 {
-    public int Score { get; private set; }
+    public int Score { get; private set; } = 0;
 
     // 注入依赖数据结构
     private readonly GridMap gridMap;
