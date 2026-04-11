@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        Test.TestPushLine();
+        Test.TestLineResolve();
 
         this.board = new Board(new GridMap(gameConfig.Rows, gameConfig.Columns));
         inputReader = gameObject.AddComponent<KeyboardInputReader>();

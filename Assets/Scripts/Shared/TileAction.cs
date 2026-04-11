@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum TileActionType { Move, Merge, Spawn };
 /*
-    Move - from, to
+    Move - from1, to
     Merge - from1, from2, to, val
     Spawn - to, val
 */
@@ -10,6 +10,13 @@ public enum TileActionType { Move, Merge, Spawn };
 // get返回的是值拷贝，所以TileAction一旦创建内部状态就无法修改
 public readonly struct TileAction
 {
+    public Vector2Int From1 { get; }
+    public Vector2Int From2 { get; }
+    public Vector2Int To { get; }
+    public int Val { get; }
+    public TileActionType ActionType { get; }
+
+    // 禁止构造函数，只能通过提供的工厂方法创建，避免犯错
     private TileAction(Vector2Int from1, Vector2Int from2, Vector2Int to, int val, TileActionType actionType)
     {
         From1 = from1;
@@ -19,13 +26,6 @@ public readonly struct TileAction
         ActionType = actionType;
     }
 
-    public Vector2Int From1 { get; }
-    public Vector2Int From2 { get; }
-    public Vector2Int To { get; }
-    public int Val { get; }
-    public TileActionType ActionType { get; }
-
-    // 禁止构造函数，只能通过提供的工厂方法创建，避免犯错
     public static TileAction Move(Vector2Int from, Vector2Int to)
     {
         return new TileAction(from, default, to, 0, TileActionType.Move);

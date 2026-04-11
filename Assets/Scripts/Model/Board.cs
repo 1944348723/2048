@@ -127,76 +127,50 @@ public class Board
 
         for (int r = 0; r < rows; ++r)
         {
-            int[] row = this.gridMap.GetRow(r);
-            hasChanged |= PushLine(row, r);
+            int[] currentRow = this.gridMap.GetRow(r);
+            LineResolveResult result = LineResolver.Resolve(currentRow);
 
-            for (int c = 0; c < row.Length; ++c)
+            // 应用操作结果
+            hasChanged |= result.HasChanged;
+            int[] newLine = result.NewLine;
+            AddToTileActions(result.Operations, r);
+            AddScore(result.Operations);
+
+            for (int c = 0; c < currentRow.Length; ++c)
             {
-                this.gridMap.Set(r, c, row[c]);
+                this.gridMap.Set(r, c, newLine[c]);
             }
         }
         return hasChanged;
     }
 
-    // public方便测试，按理说应该是private
-    // 往左，返回值为是否有变化
-    public bool PushLine(int[] line, int row = 0)
+    private void AddToTileActions(IReadOnlyList<LineOperation> operations, int row)
     {
-        bool hasChanged = false;
-        // 非零数字提取到前面，并记录原始列索引，方便后续生成TileAction
-        // <val, source column>
-        var entries = new List<(int val, int sourceCol)>();
-        for (int col = 0; col < line.Length; ++col)
-        {
-            if (line[col] != 0)
+        foreach (var op in operations) {
+            if (op.Type == LineOperationType.Move)
             {
-                entries.Add((line[col], col));
+                Vector2Int from = ToCoordinateBeforeRotation(new(row, op.From1));
+                Vector2Int to = ToCoordinateBeforeRotation(new(row, op.To));
+                tileActions.Add(TileAction.Move(from, to));
+            } else if (op.Type == LineOperationType.Merge)
+            {
+                Vector2Int from1 = ToCoordinateBeforeRotation(new(row, op.From1));
+                Vector2Int from2 = ToCoordinateBeforeRotation(new(row, op.From2));
+                Vector2Int to = ToCoordinateBeforeRotation(new(row, op.To));
+                tileActions.Add(TileAction.Merge(from1, from2, to, op.Value));
             }
         }
+    }
 
-        
-        // 所有非零数字都在entries中，对于任意一个非零数字，要么向左合并，要么向左移动，要么不动
-        // 每次尝试取read和read + 1处的数字，首先判断是否是合并。如果不是，根据sourceCol和write的关系判断是移动还是不动
-        // 合并时read+2跳过两个合并的数字，移动时read+1跳过一个被移动的数字，不动时read+1跳过一个不动的数字
-        int write = 0;
-        for (int read = 0; read < entries.Count; ++write)
+    private void AddScore(IReadOnlyList<LineOperation> operations)
+    {
+        foreach (var op in operations)
         {
-            int val = entries[read].val;
-            int sourceCol = entries[read].sourceCol;
-
-            // 合并
-            if (read + 1 < entries.Count && entries[read + 1].val == val)
+            if (op.Type == LineOperationType.Merge)
             {
-                hasChanged = true;
-                line[write] = val * 2;
-                read += 2;
-
-                Vector2Int from1 = ToCoordinateBeforeRotation(new Vector2Int(row, sourceCol));
-                Vector2Int from2 = ToCoordinateBeforeRotation(new Vector2Int(row, entries[read - 1].sourceCol));
-                Vector2Int to = ToCoordinateBeforeRotation(new Vector2Int(row, write));
-
-                this.tileActions.Add(TileAction.Merge(from1, from2, to, val * 2));
-                Score += val * 2;
-            }
-            else if (sourceCol != write) // 移动
-            {
-                hasChanged = true;
-                line[write] = val;
-                ++read;
-
-                Vector2Int from = ToCoordinateBeforeRotation(new Vector2Int(row, sourceCol));
-                Vector2Int to = ToCoordinateBeforeRotation(new Vector2Int(row, write));
-                this.tileActions.Add(TileAction.Move(from, to));
-            } else // 不动
-            {
-                ++read;
+                Score += op.Value;
             }
         }
-        for (; write < line.Length; ++write)
-        {
-            line[write] = 0;
-        }
-        return hasChanged;
     }
 
     private void GenerateRandomNumber()

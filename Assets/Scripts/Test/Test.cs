@@ -3,10 +3,8 @@ using UnityEngine;
 
 public class Test
 {
-    public static void TestPushLine()
+    public static void TestLineResolve()
     {
-        var board = new Board(new GridMap(4, 4));
-
         KeyValuePair<int[], int[]>[] pushLineTestData = new KeyValuePair<int[], int[]>[]
         {
             new KeyValuePair<int[], int[]>(
@@ -97,16 +95,18 @@ public class Test
         {
             int[] input = testData.Key;
             int[] expected = testData.Value;
-            board.PushLine(input);
-            int[] result = input;
+
+            LineResolveResult LineResult = LineResolver.Resolve(input);
+            int[] result = LineResult.NewLine;
+
             if (System.Linq.Enumerable.SequenceEqual(result, expected))
             {
                 ++passCount;
             } else
             {
-                Debug.LogError($"PushLine test failed. Expected: {string.Join(',', expected)}, Got: {string.Join(',', result)}");
+                Debug.LogError($"LineResolver.Resolve() test failed. Expected: {string.Join(',', expected)}, Got: {string.Join(',', result)}");
             }
         }
-        Debug.Log($"PushLine test passed {passCount}/{pushLineTestData.Length}");
+        Debug.Log($"LineResolver.Resolve() test passed {passCount}/{pushLineTestData.Length}");
     }
 }
