@@ -50,6 +50,11 @@ public static class LineResolver
 {
     public static LineResolveResult Resolve(int[] line)
     {
+        if (line == null)
+        {
+            throw new ArgumentNullException(nameof(line));
+        }
+
         bool hasChanged = false;
         int[] newLine = new int[line.Length];
         Array.Copy(line, newLine, line.Length);
