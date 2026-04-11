@@ -9,7 +9,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private UIScore uiScore;
     [SerializeField] private UIGameOver uiGameOver;
 
-    private GridMap gridMap;
     private Board board;
     private KeyboardInputReader inputReader;
 
@@ -29,11 +28,9 @@ public class GameManager : MonoBehaviour
     {
         Test.TestPushLine();
 
-        gridMap = new GridMap(gameConfig.Rows, gameConfig.Columns);
-        board = new Board();
+        this.board = new Board(new GridMap(gameConfig.Rows, gameConfig.Columns));
         inputReader = gameObject.AddComponent<KeyboardInputReader>();
 
-        board.Init(gridMap);
         BoardViewParams boardViewParams = new(
             gameConfig.Rows,
             gameConfig.Columns,

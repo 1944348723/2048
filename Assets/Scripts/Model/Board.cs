@@ -9,34 +9,24 @@ public class Board
     public int Score { get; private set; }
 
     // 注入依赖数据结构
-    private GridMap gridMap;
-    private int rows;
-    private int cols;
+    private readonly GridMap gridMap;
+    private readonly int rows;
+    private readonly int cols;
     // TODO: 可配置
     private readonly int[] generatableNumbers = new int[] { 2, 4 };
 
-    private bool initialized = false;
     private Rotation currentRotation = Rotation.None;
     private readonly List<TileAction> tileActions = new();
 
-    public bool Init(GridMap gridMap)
+    public Board(GridMap gridMap)
     {
-        if (initialized) {
-            Debug.LogError("Board has already been initialized.");
-            return false;
-        }
-
-        this.gridMap = gridMap;
-        this.rows = gridMap.GetRowCount();
-        this.cols = gridMap.GetColCount();
-        this.initialized = true;
-        return true;
+        this.gridMap = gridMap ?? throw new ArgumentNullException(nameof(gridMap));
+        this.rows = gridMap.Rows;
+        this.cols = gridMap.Cols;
     }
 
     public List<TileAction> StartGame()
     {
-        EnsureInitialized();
-
         this.Score = 0;
         this.gridMap.Fill(0);
         for (int i = 0; i < 2; ++i)
@@ -46,9 +36,7 @@ public class Board
         // 日志打印棋盘
         gridMap.Display();
 
-        List<TileAction> actionsToReturn = new(this.tileActions);
-        ClearTileActions();
-        return actionsToReturn;
+        return GetActions();
     }
 
     public bool IsGameOver()
@@ -93,8 +81,13 @@ public class Board
             gridMap.Display();
         }
 
+        return GetActions();
+    }
+
+    private List<TileAction> GetActions()
+    {
         List<TileAction> actionsToReturn = new(this.tileActions);
-        ClearTileActions();
+        this.tileActions.Clear();
         return actionsToReturn;
     }
 
@@ -127,7 +120,7 @@ public class Board
         return false;
     }
 
-    // 返回值为是否有变化
+    // 返回这次操作是否有变化
     private bool PushLeft()
     {
         bool hasChanged = false;
@@ -220,29 +213,15 @@ public class Board
         this.tileActions.Add(TileAction.Spawn(coordinate, num));
     }
 
-    private void ClearTileActions()
-    {
-        this.tileActions.Clear();
-    }
-
     private Vector2Int ToCoordinateBeforeRotation(Vector2Int coord)
     {
-        switch (this.currentRotation)
+        return this.currentRotation switch
         {
-            case Rotation.Clockwise90:
-                return this.gridMap.Rotate270Clockwise(coord);
-            case Rotation.Clockwise180:
-                return this.gridMap.Rotate180Clockwise(coord);
-            case Rotation.Clockwise270:
-                return this.gridMap.Rotate90Clockwise(coord);
-            case Rotation.None:
-                return coord;
-        }
-        return coord;
-    }
-
-    private void EnsureInitialized()
-    {
-        if (!initialized) throw new InvalidOperationException("Board has not been initialized.");
+            Rotation.Clockwise90 => this.gridMap.Rotate270Clockwise(coord),
+            Rotation.Clockwise180 => this.gridMap.Rotate180Clockwise(coord),
+            Rotation.Clockwise270 => this.gridMap.Rotate90Clockwise(coord),
+            Rotation.None => coord,
+            _ => throw new InvalidOperationException("Invalid Rotation State"),
+        };
     }
 }

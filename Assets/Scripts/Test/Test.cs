@@ -5,9 +5,7 @@ public class Test
 {
     public static void TestPushLine()
     {
-        var gridMap = new GridMap(4, 4);
-        var board = new Board();
-        board.Init(gridMap);
+        var board = new Board(new GridMap(4, 4));
 
         KeyValuePair<int[], int[]>[] pushLineTestData = new KeyValuePair<int[], int[]>[]
         {

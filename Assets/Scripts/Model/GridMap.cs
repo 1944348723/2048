@@ -5,10 +5,9 @@ using UnityEngine;
 
 public class GridMap
 {
-    private int[,] map;
-    private int rows;
-    private int cols;
-
+    public int Rows { get; private set; }
+    public int Cols { get; private set; }
+    private int[,] data;
     // 值为0时表示空格子
     private readonly HashSet<Vector2Int> emptyCells = new();
 
@@ -16,44 +15,47 @@ public class GridMap
     {
         if (rows < 1) throw new ArgumentOutOfRangeException(nameof(rows), "rows must be greater than 0.");
         if (cols < 1) throw new ArgumentOutOfRangeException(nameof(cols), "cols must be greater than 0.");
-        this.rows = rows;
-        this.cols = cols;
+        this.Rows = rows;
+        this.Cols = cols;
 
-        this.map = new int[rows, cols];
-        for (int r = 0; r < rows; ++r)
-        {
-            for (int c = 0; c < cols; ++c)
-            {
-                map[r, c] = 0;
-                emptyCells.Add(new Vector2Int(r, c));
-            }
-        }
+        this.data = new int[rows, cols];
+        Fill(0);
+        // 这里必须得Rebuild，data创建后默认全部为0，Fill中是用Set来设置值的，如果原来就是0的话，设置成0并不会将其加入emptyCells
+        RebuildEmptyCells();
     }
 
+    #region 访问
+    // 复制一份
     public int[,] Data()
     {
-        int[,] copy = new int[rows, cols];
-        Array.Copy(map, copy, map.Length);
+        int[,] copy = new int[Rows, Cols];
+        Array.Copy(data, copy, data.Length);
         return copy;
     }
 
     public int Get(int row, int col)
     {
         CheckBounds(row, col);
-        return map[row, col];
+        return data[row, col];
     }
 
-    public void Set(int row, int col, int val)
+    // 复制一份
+    public int[] GetRow(int row)
     {
-        CheckBounds(row, col);
-        if (map[row, col] == 0 && val != 0) {
-            emptyCells.Remove(new Vector2Int(row, col));
-        } else if (map[row, col] != 0 && val == 0) {
-            emptyCells.Add(new Vector2Int(row, col));
+        CheckBounds(row, 0);
+        int[] res = new int[Cols];
+        for (int col = 0; col < Cols; ++col)
+        {
+            res[col] = this.data[row, col];
         }
-        map[row, col] = val;
+        return res;
     }
 
+    public bool IsFull()
+    {
+        return emptyCells.Count == 0;
+    }
+    
     // O(n)
     public bool TryGetRandomEmptyCoordinate(out Vector2Int coordinate)
     {
@@ -67,58 +69,89 @@ public class GridMap
         return true;
     }
 
+    public void Display()
+    {
+        for (int r = 0; r < Rows; ++r)
+        {
+            Debug.Log(string.Join(' ', GetRow(r)));
+        }
+        Debug.Log("------------------------------------");
+    }
+    #endregion
+    
+    #region 修改
+
+    // 原来非零修改后为0会将其加入emptyCells，相反会将其移除
+    public void Set(int row, int col, int val)
+    {
+        CheckBounds(row, col);
+        if (data[row, col] == 0 && val != 0) {
+            emptyCells.Remove(new Vector2Int(row, col));
+        } else if (data[row, col] != 0 && val == 0) {
+            emptyCells.Add(new Vector2Int(row, col));
+        }
+        data[row, col] = val;
+    }
+
+    // 内部通过Set赋值
     public void Fill(int val)
     {
-        for (int r = 0; r < rows; ++r)
+        for (int r = 0; r < Rows; ++r)
         {
-            for (int c = 0; c < cols; ++c)
+            for (int c = 0; c < Cols; ++c)
             {
                 Set(r, c, val);
             }
         }
     }
+    #endregion
 
+    #region 旋转
     public void Rotate90Clockwise()
     {
-        int[,] newMap = new int[cols, rows];
-        for (int r = 0; r < rows; ++r)
+        int[,] newMap = new int[Cols, Rows];
+        for (int r = 0; r < Rows; ++r)
         {
-            for (int c = 0; c < cols; ++c)
+            for (int c = 0; c < Cols; ++c)
             {
-                newMap[c, rows - 1 - r] = map[r, c];
+                newMap[c, Rows - 1 - r] = data[r, c];
             }
         }
-        map = newMap;
-        Swap(ref rows, ref cols);
+        data = newMap;
+
+        (Cols, Rows) = (Rows, Cols);
+
         this.RebuildEmptyCells();
     }
 
     public void Rotate180Clockwise()
     {
-        int[,] newMap = new int[rows, cols];
-        for (int r = 0; r < rows; ++r)
+        int[,] newMap = new int[Rows, Cols];
+        for (int r = 0; r < Rows; ++r)
         {
-            for (int c = 0; c < cols; ++c)
+            for (int c = 0; c < Cols; ++c)
             {
-                newMap[rows - 1 - r, cols - 1 - c] = map[r, c];
+                newMap[Rows - 1 - r, Cols - 1 - c] = data[r, c];
             }
         }
-        map = newMap;
+        data = newMap;
         this.RebuildEmptyCells();
     }
 
     public void Rotate270Clockwise()
     {
-        int[,] newMap = new int[cols, rows];
-        for (int r = 0; r < rows; ++r)
+        int[,] newMap = new int[Cols, Rows];
+        for (int r = 0; r < Rows; ++r)
         {
-            for (int c = 0; c < cols; ++c)
+            for (int c = 0; c < Cols; ++c)
             {
-                newMap[cols - 1 - c, r] = map[r, c];
+                newMap[Cols - 1 - c, r] = data[r, c];
             }
         }
-        map = newMap;
-        Swap(ref rows, ref cols);
+        data = newMap;
+
+        (Cols, Rows) = (Rows, Cols);
+
         this.RebuildEmptyCells();
     }
 
@@ -126,62 +159,28 @@ public class GridMap
     // 数组下的(0,0)类似笛卡尔坐标系下的(1, 1)，旋转是会变化的
     public Vector2Int Rotate90Clockwise(Vector2Int coord)
     {
-        return new Vector2Int(coord.y, rows - 1 - coord.x);
+        return new Vector2Int(coord.y, Rows - 1 - coord.x);
     }
 
     public Vector2Int Rotate180Clockwise(Vector2Int coord)
     {
-        return new Vector2Int(rows - 1 - coord.x, cols - 1 - coord.y);
+        return new Vector2Int(Rows - 1 - coord.x, Cols - 1 - coord.y);
     }
 
     public Vector2Int Rotate270Clockwise(Vector2Int coord)
     {
-        return new Vector2Int(cols - 1 - coord.y, coord.x);
+        return new Vector2Int(Cols - 1 - coord.y, coord.x);
     }
-
-    // 复制一份
-    public int[] GetRow(int row)
-    {
-        int[] res = new int[cols];
-        for (int col = 0; col < cols; ++col)
-        {
-            res[col] = this.map[row, col];
-        }
-        return res;
-    }
-
-    public int GetRowCount()
-    {
-        return this.rows;
-    }
-
-    public int GetColCount()
-    {
-        return this.cols;
-    }
-
-    public bool IsFull()
-    {
-        return emptyCells.Count == 0;
-    }
-
-    public void Display()
-    {
-        for (int r = 0; r < rows; ++r)
-        {
-            Debug.Log(string.Join(' ', GetRow(r)));
-        }
-        Debug.Log("------------------------------------");
-    }
+    #endregion
 
     private void RebuildEmptyCells()
     {
         this.emptyCells.Clear();
-        for (int r = 0; r < rows; ++r)
+        for (int r = 0; r < Rows; ++r)
         {
-            for (int c = 0; c < cols; ++c)
+            for (int c = 0; c < Cols; ++c)
             {
-                if (map[r, c] == 0)
+                if (data[r, c] == 0)
                 {
                     emptyCells.Add(new Vector2Int(r, c));
                 }
@@ -191,14 +190,9 @@ public class GridMap
 
     private void CheckBounds(int row, int col)
     {
-        if (row < 0 || row >= rows || col < 0 || col >= cols)
+        if (row < 0 || row >= Rows || col < 0 || col >= Cols)
         {
             throw new IndexOutOfRangeException("Row or column is out of bounds.");
         }
-    }
-
-    private void Swap(ref int a, ref int b)
-    {
-        (b, a) = (a, b);
     }
 }
