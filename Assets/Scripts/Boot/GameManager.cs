@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
 
     private Board board;
     private KeyboardInputReader inputReader;
+    private GameSaveService gameSaveService;
 
     private void Awake()
     {
@@ -27,7 +28,8 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         this.board = new Board(new GridMap(gameConfig.Rows, gameConfig.Columns));
-        inputReader = gameObject.AddComponent<KeyboardInputReader>();
+        this.gameSaveService = new GameSaveService();
+        this.inputReader = gameObject.AddComponent<KeyboardInputReader>();
 
         BoardViewParams boardViewParams = new(
             gameConfig.Rows,
@@ -42,7 +44,7 @@ public class GameManager : MonoBehaviour
         boardView.Init(boardViewParams);
 
 
-        uiScore.SetHighScore(PlayerPrefs.GetInt("HighScore", 0));
+        uiScore.SetHighScore(gameSaveService.GetHighScore());
         uiScore.SetScore(0);
 
         // 当前项目所有对象的生命周期都是整个游戏流程，没有销毁的情况，所以只有注册，没有解绑也没问题
@@ -81,7 +83,7 @@ public class GameManager : MonoBehaviour
         uiGameOver.Reset();
         uiGameOver.gameObject.SetActive(false);
         uiScore.SetScore(0);
-        uiScore.SetHighScore(PlayerPrefs.GetInt("HighScore", 0));
+        uiScore.SetHighScore(gameSaveService.GetHighScore());
 
         var actions = board.StartGame();
         boardView.UpdateView(actions);
@@ -100,8 +102,10 @@ public class GameManager : MonoBehaviour
 
     private void GameOver()
     {
-        TryUpdateHighScore();
-        uiGameOver.ShowHighScore(PlayerPrefs.GetInt("HighScore", 0));
+        gameSaveService.TryUpdateHighScore(board.Score);
+        int highScore = gameSaveService.GetHighScore();
+        uiScore.SetHighScore(highScore);
+        uiGameOver.ShowHighScore(highScore);
         uiGameOver.gameObject.SetActive(true);
         Debug.Log("Game Over");
     }
@@ -109,16 +113,6 @@ public class GameManager : MonoBehaviour
     private void UpdateUI()
     {
         uiScore.SetScore(board.Score);
-    }
-
-    private void TryUpdateHighScore()
-    {
-        int highScore = PlayerPrefs.GetInt("HighScore", 0);
-        if (board.Score > highScore)
-        {
-            PlayerPrefs.SetInt("HighScore", board.Score);
-            uiScore.SetHighScore(board.Score);
-        }
     }
 
     private Direction MapDirection(InputDirection inputDirection)
