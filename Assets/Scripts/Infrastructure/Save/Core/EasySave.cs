@@ -32,7 +32,7 @@ public static class EasySave
             throw new ArgumentNullException(nameof(key));
         }
         EnsureInitialized();
-        return saveStore.HasKey(key);
+        return saveStore.HasKey(key, file);
     }
 
     internal static void Init(SaveLocation location)
