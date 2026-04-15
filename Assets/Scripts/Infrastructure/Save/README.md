@@ -1,24 +1,73 @@
 # 简介
 模仿`EasySave`接口和功能实现的存储系统
 
-## 设计时考虑的问题
-###key对应的存储层级###
-**1.json文件中一个key直接对应一个文件，PlayerPrefs中和自身的key语义一致**
+# 设计时考虑的问题
+## null的处理
+对null的处理是在入口处直接抛异常拦截，我觉得传null在语义上就是不对的
+```C#
+Save(key, null);    // 这不就是不存数据吗，那其实根本就没必要调用
+Save(null, data);   // null作为key我觉得不成立
+Load(key);          // 不成立
+```
 
-我一开始让AI给我写时，他给出的就是这个方案，当然它没有明确说出这一点，这个问题都是在阅读了它给出的代码以及后续和它讨论的过程中提取出来的
+`Load`时找不到的情况则返回默认值
 
-这样实现的优点很明显，**实现比较简单**。`key`的语义和`PlayerPrefs`中一致，那就不用去管理key，只要处理数据的序列化和反序列化就行了。对于json存取，由于一个`key`对应一个文件，那么每次存取、删除等操作都是一个整体，不用在一个文件中单独操作某一项
+# 序列化
+目前只实现了json序列化，且还是用的Unity自带的`JsonUtility`，由于`JsonUtility`不支持`int`、`float`这样的基础类型以及数组之类的，所以在序列化之前统一将数据装到`Wrapper<T>`中，这样基础数据类型就能存了，并让嵌套类型格式和基础类型一致
 
-但是这样我感觉不太对，**如果使用时都是一个`key`存一条数据，而不是合并成一个数据来存的话，文件就会特别多，查看、编辑起来都很不方方便**。对于使用者来说，每次直接按`key`存取肯定用起来更简单，那就很容易出现我前面提到的情况。
+```C#
+[Serializable]
+class Wrapper<T> {
+    public T data;
+    public Wrapper<T>(T data) {
+        this.data = value;
+    }
+}
 
-**2.json文件中单文件多key，PlayerPrefs中单项多key**
+[Serializable]
+class ExampleData {
+    public int data1 = 1;
+    public float data2 = 1.1f;
+    public bool data3 = true;
+    public string data4 = "string";
+}
+serializer.Serialize(new ExampleData());
+转出来的数据格式大概像下面这样
+{"data":{"data1":1,"data2":1.1,"data3":true,"data4":"string"}}
 
-这种方式就是统一使用json格式存储`key`和数据，只是放在json文件里还是放在一个PlayerPrefs项中
+int data = 1;
+serializer.Serailize(data);
+转出来的数据是这样
+{"data":1}
 
-这样做的好处是**逻辑统一，分层清晰**，可以分为**入口层**、**序列化层**、**存储层**，流程统一，流程代码只要使用序列化层和存储层的接口就行，然后提供不同的实现
+也就是转出来的数据外面会套一层`{"data":};
+```
 
-但是这样的话**跟PlayerPrefs原来的语义不兼容，切换存储系统的话不方便**
+# 存取
+## PlayerPrefs
+序列化后直接存入，一个`key`对应一项
 
-**3.json中单文件多key，PlayerPrefs中和自身key语义一致**
+取出时如果找不到`key`或者数据为空，则返回默认值
 
-这样做是**最符合直觉，也能兼容PlayerPrefs原生实现**的
+## JsonFile
+JsonFile的存取稍微麻烦点，因为是在同一个文件中存多个`key`对应的数据，所以需要进行`key`的管理。定义了两个数据结构来完成Json结构管理，`SaveFileData`对应一整个文件的内容，`SaveEntry`对应一个`key-value`对，一个文件中有多个`key-value`对，所以`SaveFileData`中放的是`SaveEntry`列表。两个类都用了`[Serializable]`，所以实际存取时只要使用这两个数据结构来操作就行了，它们对应的序列化和反序列化操作会自动在`Serializer`中完成
+
+```C#
+[Serializable]
+internal class SaveEntry
+{
+    public string Key;
+    public string Value;
+}
+
+[Serializable]
+internal class SaveFileData
+{
+    public List<SaveEntry> Entries = new();
+}
+```
+实际一个文件中存储的数据会是这样的
+```json
+{"Entries":[{"Key":"HighScore","Value":"{\"data\":1476}"}]}
+```
+顶层是`Entries`，包含多个`Key-Value`对，`Value`中是数据序列化的内容，由于我们使用了`Wrapper<T>`包了一层，所以实际数据外面多了一层`data`
