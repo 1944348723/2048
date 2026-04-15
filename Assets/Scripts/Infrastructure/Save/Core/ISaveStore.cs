@@ -1,6 +1,6 @@
 internal interface ISaveStore
 {
-    void Save<T>(string key, T data);
-    T Load<T>(string key);
-    bool HasKey(string key);
+    void Save<T>(string key, T data, string file = null);
+    T Load<T>(string key, string file = null);
+    bool HasKey(string key, string file = null);
 }

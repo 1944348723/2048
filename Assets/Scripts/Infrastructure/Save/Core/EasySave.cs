@@ -6,26 +6,26 @@ public static class EasySave
 
     private static bool initialied = false;
 
-    public static void Save<T>(string key, T data) {
+    public static void Save<T>(string key, T data, string file = null) {
         if (key == null || data == null)
         {
             throw new ArgumentNullException();
         }
         EnsureInitialized();
-        saveStore.Save<T>(key, data);
+        saveStore.Save<T>(key, data, file);
     }
 
-    public static T Load<T>(string key)
+    public static T Load<T>(string key, string file = null)
     {
         if (key == null)
         {
             throw new ArgumentNullException(nameof(key));
         }
         EnsureInitialized();
-        return saveStore.Load<T>(key);
+        return saveStore.Load<T>(key, file);
     }
 
-    public static bool HasKey(string key)
+    public static bool HasKey(string key, string file = null)
     {
         if (key == null)
         {

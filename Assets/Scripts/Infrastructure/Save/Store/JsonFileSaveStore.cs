@@ -18,8 +18,8 @@ internal class SaveFileData
 
 internal class JsonFileSaveStore : ISaveStore
 {
+    private const string DEFAULT_FILE_NAME = "save.json";
     private readonly string directory = Application.persistentDataPath;
-    private readonly string filePath = Application.persistentDataPath + "/save.json";
     private readonly ISerializer serializer;
 
     public JsonFileSaveStore(ISerializer serializer)
@@ -27,8 +27,9 @@ internal class JsonFileSaveStore : ISaveStore
         this.serializer = serializer;
     }
 
-    public T Load<T>(string key)
+    public T Load<T>(string key, string file = null)
     {
+        string filePath = GetFilePath(file);
         SaveFileData data = ReadFile(filePath);
         SaveEntry entry = FindEntry(data, key);
         if (entry == null)
@@ -38,8 +39,9 @@ internal class JsonFileSaveStore : ISaveStore
         return serializer.Deserialize<T>(entry.Value);
     }
 
-    public void Save<T>(string key, T data)
+    public void Save<T>(string key, T data, string file = null)
     {
+        string filePath = GetFilePath(file);
         SaveFileData fileData = ReadFile(filePath);
         SaveEntry entry = FindEntry(fileData, key);
         
@@ -50,11 +52,12 @@ internal class JsonFileSaveStore : ISaveStore
         }
 
         entry.Value = serializer.Serialize<T>(data);
-        WriteFile(this.filePath, fileData);
+        WriteFile(filePath, fileData);
     }
 
-    public bool HasKey(string key)
+    public bool HasKey(string key, string file = null)
     {
+        string filePath = GetFilePath(file);
         SaveFileData data = ReadFile(filePath);
         SaveEntry entry = FindEntry(data, key);
         return entry != null;
@@ -89,5 +92,10 @@ internal class JsonFileSaveStore : ISaveStore
             }
         }
         return null;
+    }
+
+    private string GetFilePath(string file = null)
+    {
+        return directory + '/' + (file ?? DEFAULT_FILE_NAME);
     }
 }

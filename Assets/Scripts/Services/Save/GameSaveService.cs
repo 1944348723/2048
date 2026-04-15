@@ -7,10 +7,11 @@
 public class GameSaveService
 {
     private const string HIGH_SCORE_KEY = "HighScore";
+    private const string SAVE_FILE_NAME = "2048save.json";
 
     public int GetHighScore()
     {
-        return EasySave.Load<int>(HIGH_SCORE_KEY);
+        return EasySave.Load<int>(HIGH_SCORE_KEY, SAVE_FILE_NAME);
     }
 
     public bool TryUpdateHighScore(int score)
@@ -18,7 +19,7 @@ public class GameSaveService
         int highScore = GetHighScore();
         if (score > highScore)
         {
-            EasySave.Save<int>(HIGH_SCORE_KEY, score);
+            EasySave.Save<int>(HIGH_SCORE_KEY, score, SAVE_FILE_NAME);
             return true;
         }
         return false;
