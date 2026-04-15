@@ -63,6 +63,7 @@ internal class JsonFileSaveStore : ISaveStore
         return entry != null;
     }
 
+    // 读数据时文件不存在就用默认数据
     private SaveFileData ReadFile(string filePath)
     {
         if (!File.Exists(filePath))
@@ -74,11 +75,24 @@ internal class JsonFileSaveStore : ISaveStore
         return JsonUtility.FromJson<SaveFileData>(json) ?? new SaveFileData();
     }
 
+    // 安全写入
     private void WriteFile(string filePath, SaveFileData data)
     {
         Directory.CreateDirectory(directory);
         string json = JsonUtility.ToJson(data);
-        File.WriteAllText(filePath, json);
+        
+        string tmp = filePath + ".tmp";
+        File.WriteAllText(tmp, json);
+        if (File.Exists(filePath))
+        {
+            // 先备份原文件，然后再将其替换
+            string backup = filePath + ".bak";
+            File.Replace(tmp, filePath, backup);
+        } else
+        {
+            // 类似linux的命令mov，可以用来改文件名
+            File.Move(tmp, filePath);
+        }
     }
 
     private SaveEntry FindEntry(SaveFileData data, string key)

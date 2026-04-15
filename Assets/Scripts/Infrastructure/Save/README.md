@@ -1,17 +1,6 @@
 # 简介
 模仿`EasySave`接口和功能实现的存储系统
 
-# 设计时考虑的问题
-## null的处理
-对null的处理是在入口处直接抛异常拦截，我觉得传null在语义上就是不对的
-```C#
-Save(key, null);    // 这不就是不存数据吗，那其实根本就没必要调用
-Save(null, data);   // null作为key我觉得不成立
-Load(key);          // 不成立
-```
-
-`Load`时找不到的情况则返回默认值
-
 # 序列化
 目前只实现了json序列化，且还是用的Unity自带的`JsonUtility`，由于`JsonUtility`不支持`int`、`float`这样的基础类型以及数组之类的，所以在序列化之前统一将数据装到`Wrapper<T>`中，这样基础数据类型就能存了，并让嵌套类型格式和基础类型一致
 
@@ -71,3 +60,21 @@ internal class SaveFileData
 {"Entries":[{"Key":"HighScore","Value":"{\"data\":1476}"}]}
 ```
 顶层是`Entries`，包含多个`Key-Value`对，`Value`中是数据序列化的内容，由于我们使用了`Wrapper<T>`包了一层，所以实际数据外面多了一层`data`
+
+# 考虑的问题
+## null的处理
+对null的处理是在入口处直接抛异常拦截，我觉得传null在语义上就是不对的
+```C#
+Save(key, null);    // 这不就是不存数据吗，那其实根本就没必要调用
+Save(null, data);   // null作为key我觉得不成立
+Load(key);          // 不成立
+```
+
+`Load`时找不到的情况则返回默认值
+
+## 写存档
+如果直接在原存档文件上写，那么如果中途出现意外导致中断(如断电、游戏崩溃、磁盘异常)，那么原来的存档就可能损坏
+
+常见的作法是先写到临时文件里，临时文件写入成功后删除原文件，然后重命名临时文件
+
+不过`File`中提供了现成的`Replace(tmp, target, backup)`接口，已有存档时可以使用这个接口，没有时就用`Move()`重命名文件
