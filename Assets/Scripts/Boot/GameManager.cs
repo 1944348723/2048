@@ -87,6 +87,7 @@ public class GameManager : MonoBehaviour
 
         var actions = board.StartGame();
         boardView.UpdateView(actions);
+        inputReader.enabled = true;
     }
 
     private void CheckGameOver()
