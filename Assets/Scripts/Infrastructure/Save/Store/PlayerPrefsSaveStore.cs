@@ -1,42 +1,65 @@
+using System;
+using System.IO;
 using UnityEngine;
 
-internal class PlayerPrefsSaveStore : ISaveStore
+internal class PlayerPrefsSaveStore : AbstractSaveStore
 {
     private const string DEFAULT_FILE_NAME = "MyES3";
-    private readonly ISerializer serializer;
 
-    public PlayerPrefsSaveStore(ISerializer serializer)
-    {
-        this.serializer = serializer;
-    }
+    public PlayerPrefsSaveStore(ISerializer serializer) : base(serializer) {}
 
-    public T Load<T>(string key, string file = null)
+    public override bool HasKey(string key, string file = null)
     {
-        string fullKey = GetFullKey(key, file);
-        if (!PlayerPrefs.HasKey(fullKey))
+        if (!ContainerExists(file))
         {
-            return default;
+            return false;
         }
-        string data = PlayerPrefs.GetString(fullKey);
-        if (string.IsNullOrWhiteSpace(data))
+
+        SaveFileData fileData = ReadContainer(file);
+        return FindEntry(fileData, key) != null;
+    }
+
+    protected override SaveFileData ReadContainer(string file)
+    {
+        string fileName = GetFileName(file);
+        if (!PlayerPrefs.HasKey(fileName))
         {
-            return default;
+            throw new FileNotFoundException("Ensure the file exists.", fileName);
         }
-        return serializer.Deserialize<T>(data);
+        
+        string json = PlayerPrefs.GetString(fileName);
+        try
+        {
+            return JsonUtility.FromJson<SaveFileData>(json) ?? new SaveFileData();
+        } catch (Exception e)
+        {
+            throw new InvalidOperationException("Deserialize file data failed.", e);
+        }
     }
 
-    public void Save<T>(string key, T data, string file = null)
+    protected override bool ContainerExists(string file)
     {
-        PlayerPrefs.SetString(GetFullKey(key, file), serializer.Serialize<T>(data));
+        string fileName = GetFileName(file);
+        return PlayerPrefs.HasKey(fileName);
     }
 
-    public bool HasKey(string key, string file = null)
+    protected override void WriteContainer(string file, SaveFileData fileData)
     {
-        return PlayerPrefs.HasKey(GetFullKey(key, file));
+        string fileName = GetFileName(file);
+        string json;
+        try
+        {
+            json = JsonUtility.ToJson(fileData);
+        } catch (Exception e)
+        {
+            throw new InvalidOperationException("Serialize file data failed.", e);
+        }
+
+        PlayerPrefs.SetString(fileName, json);
     }
 
-    private string GetFullKey(string key, string file = null)
+    private string GetFileName(string file)
     {
-        return (file ?? DEFAULT_FILE_NAME) + "." + key;
+        return file ?? DEFAULT_FILE_NAME;
     }
 }

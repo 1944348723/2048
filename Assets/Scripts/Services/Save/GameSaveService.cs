@@ -11,7 +11,7 @@ public class GameSaveService
 
     public int GetHighScore()
     {
-        return EasySave.Load<int>(HIGH_SCORE_KEY, SAVE_FILE_NAME);
+        return EasySave.Load<int>(HIGH_SCORE_KEY, 0, SAVE_FILE_NAME);
     }
 
     public bool TryUpdateHighScore(int score)

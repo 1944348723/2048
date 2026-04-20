@@ -6,25 +6,13 @@ internal class JsonSerializer : ISerializer
     public T Deserialize<T>(string data)
     {
         // null会返回null
-        try
-        {
-            return JsonUtility.FromJson<Wrapper<T>>(data).data;
-        } catch (Exception e)
-        {
-            throw new InvalidOperationException("Deserialize failed", e);
-        }
+        return JsonUtility.FromJson<Wrapper<T>>(data).data;
     }
 
     public string Serialize<T>(T data)
     {
         // null会返回空字符串
-        try
-        {
-            return JsonUtility.ToJson(new Wrapper<T>(data));
-        } catch (Exception e)
-        {
-            throw new InvalidOperationException("Serialize failed", e);
-        }
+        return JsonUtility.ToJson(new Wrapper<T>(data));
     }
 
     // JsonUtility不能直接序列化int、float这类基础类型以及数组之类的

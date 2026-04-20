@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 public static class EasySave
 {
@@ -15,6 +16,13 @@ public static class EasySave
         saveStore.Save<T>(key, data, file);
     }
 
+    /// <summary>
+    /// 严格读取，文件不存在、key不存在、反序列化失败都抛异常
+    /// </summary>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="FileNotFoundException"></exception>
+    /// <exception cref="KeyNotFoundException"></exception>
     public static T Load<T>(string key, string file = null)
     {
         if (key == null)
@@ -25,6 +33,23 @@ public static class EasySave
         return saveStore.Load<T>(key, file);
     }
 
+    /// <summary>
+    /// 宽松读取，文件不存在、key不存在返回默认值，反序列化失败抛异常
+    /// </summary>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static T Load<T>(string key, T defaultValue, string file = null)
+    {
+        if (key == null)
+        {
+            throw new ArgumentNullException(nameof(key));
+        }
+        EnsureInitialized();
+        return saveStore.Load<T>(key, defaultValue, file);
+    }
+
+    // 文件不存在也返回false
+    // 反序列化失败会抛异常
     public static bool HasKey(string key, string file = null)
     {
         if (key == null)

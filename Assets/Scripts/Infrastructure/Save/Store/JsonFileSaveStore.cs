@@ -1,85 +1,63 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-[Serializable]
-internal class SaveEntry
+internal class JsonFileSaveStore : AbstractSaveStore
 {
-    public string Key;
-    public string Value;
-}
-
-[Serializable]
-internal class SaveFileData
-{
-    public List<SaveEntry> Entries = new();
-}
-
-internal class JsonFileSaveStore : ISaveStore
-{
-    private const string DEFAULT_FILE_NAME = "save.json";
+    private const string DEFAULT_FILE_NAME = "MyES3.json";
     private readonly string directory = Application.persistentDataPath;
-    private readonly ISerializer serializer;
 
-    public JsonFileSaveStore(ISerializer serializer)
-    {
-        this.serializer = serializer;
-    }
+    public JsonFileSaveStore(ISerializer serializer): base(serializer) {}
 
-    public T Load<T>(string key, string file = null)
+    public override bool HasKey(string key, string file = null)
     {
         string filePath = GetFilePath(file);
-        SaveFileData data = ReadFile(filePath);
-        SaveEntry entry = FindEntry(data, key);
-        if (entry == null)
+        if (!File.Exists(filePath))
         {
-            return default;
+            return false;
         }
-        return serializer.Deserialize<T>(entry.Value);
-    }
-
-    public void Save<T>(string key, T data, string file = null)
-    {
-        string filePath = GetFilePath(file);
-        SaveFileData fileData = ReadFile(filePath);
-        SaveEntry entry = FindEntry(fileData, key);
-        
-        if (entry == null)
-        {
-            entry = new SaveEntry{ Key = key };
-            fileData.Entries.Add(entry);
-        }
-
-        entry.Value = serializer.Serialize<T>(data);
-        WriteFile(filePath, fileData);
-    }
-
-    public bool HasKey(string key, string file = null)
-    {
-        string filePath = GetFilePath(file);
-        SaveFileData data = ReadFile(filePath);
-        SaveEntry entry = FindEntry(data, key);
-        return entry != null;
+        SaveFileData fileData = ReadContainer(file);
+        return FindEntry(fileData, key) != null;
     }
 
     // 读数据时文件不存在就用默认数据
-    private SaveFileData ReadFile(string filePath)
+    protected override SaveFileData ReadContainer(string file)
     {
+        string filePath = GetFilePath(file);
         if (!File.Exists(filePath))
         {
-            return new SaveFileData();
+            throw new FileNotFoundException("Ensure the file exists.", filePath);
         }
 
         string json = File.ReadAllText(filePath);
-        return JsonUtility.FromJson<SaveFileData>(json) ?? new SaveFileData();
+        try
+        {
+            return JsonUtility.FromJson<SaveFileData>(json) ?? new SaveFileData();
+        } catch (Exception e)
+        {
+            throw new InvalidOperationException("Deserialize file data failed.", e);
+        }
+    }
+
+    protected override bool ContainerExists(string file)
+    {
+        string filePath = GetFilePath(file);
+        return File.Exists(filePath);
     }
 
     // 安全写入
-    private void WriteFile(string filePath, SaveFileData data)
+    protected override void WriteContainer(string file, SaveFileData data)
     {
+        string filePath = GetFilePath(file);
         Directory.CreateDirectory(directory);
-        string json = JsonUtility.ToJson(data);
+        string json;
+        try
+        {
+            json = JsonUtility.ToJson(data);
+        } catch(Exception e)
+        {
+            throw new InvalidOperationException("Serialize file data failed.", e);
+        }
         
         string tmp = filePath + ".tmp";
         File.WriteAllText(tmp, json);
@@ -93,19 +71,6 @@ internal class JsonFileSaveStore : ISaveStore
             // 类似linux的命令mov，可以用来改文件名
             File.Move(tmp, filePath);
         }
-    }
-
-    private SaveEntry FindEntry(SaveFileData data, string key)
-    {
-        int count = data.Entries.Count;
-        for (int i = 0; i < count; ++i)
-        {
-            if (data.Entries[i].Key == key)
-            {
-                return data.Entries[i];
-            }
-        }
-        return null;
     }
 
     private string GetFilePath(string file = null)
