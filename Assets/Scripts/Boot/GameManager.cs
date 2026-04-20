@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public class GameManager : MonoBehaviour
 {
@@ -63,18 +64,17 @@ public class GameManager : MonoBehaviour
         Direction direction = MapDirection(inputReader.GetCurrentDirection());
         if (direction == Direction.None) return;
 
-        bool hasChanged = false;
         List<TileAction> actions = board.TryMove(direction);
-        if (actions == null) return;
+        Assert.IsNotNull(actions);
 
-        hasChanged = actions.Count > 0;
         // 有变化的话暂时禁止输入，等动画结束
+        bool hasChanged = actions.Count > 0;
         if (hasChanged)
         {
             inputReader.SetActive(false);
+            boardView.UpdateView(actions);
+            UpdateUI();
         }
-        boardView.UpdateView(actions);
-        UpdateUI();
     }
 
     private void Restart()
