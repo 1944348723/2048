@@ -142,3 +142,33 @@ graph TD
     AbstractSaveStore --调用差异化实现--> JsonFileSaveStore
     AbstractSaveStore --调用差异化实现--> PlayerPrefsSaveStore
 ```
+
+# Tween系统
+
+## 架构
+```mermaid
+graph
+    TweenRunner["TweenRunner
+    驱动Tween系统更新"]
+
+    DoTween["DoTween
+    用户静态访问入口"]
+
+    DoVirtual["DoVirtual
+    用户静态访问入口"]
+
+    TweenManager["TweenManager
+    管理、更新TweenBase"]
+
+    Tweener
+
+    DelayTween
+
+    TweenRunner --调用Tick--> DoTween
+    DoTween --创建并返回--> Tweener
+    DoTween --操作--> TweenManager
+    DoVirtual --操作--> TweenManager
+    DoVirtual --创建并返回--> DelayTween
+    TweenManager --管理--> Tweener
+    TweenManager --管理--> DelayTween
+```
